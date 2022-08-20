@@ -1,0 +1,40 @@
+{
+    "name": "forward-game",
+    "version": "1.0.0",
+    "private": true,
+    "description": "",
+    "keywords": [],
+    "homepage": "https://github.com/electrovir/forward-game",
+    "bugs": {
+        "url": "https://github.com/electrovir/forward-game/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/electrovir/forward-game"
+    },
+    "license": "MIT",
+    "author": {
+        "name": "electrovir",
+        "url": "https://github.com/electrovir"
+    },
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "virmator frontend build",
+        "compile": "rm -rf dist && tsc --project tsconfig.json",
+        "format": "virmator format write",
+        "spellcheck": "virmator spellcheck",
+        "start": "npm install && virmator frontend",
+        "test": "virmator test-web",
+        "test:full": "npm run test:types && npm test && npm run spellcheck && virmator format check",
+        "test:types": "tsc --noEmit"
+    },
+    "dependencies": {
+        "augment-vir": "2.4.0",
+        "element-vir": "5.6.1",
+        "spa-router-vir": "1.2.0"
+    },
+    "devDependencies": {
+        "virmator": "3.0.6"
+    }
+}
