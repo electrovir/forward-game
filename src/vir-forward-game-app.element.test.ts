@@ -3,6 +3,6 @@ import {VirForwardGameApp} from './vir-forward-game-app.element';
 
 describe(VirForwardGameApp.tagName, () => {
     it('should create an element', async () => {
-        renderEmptyElement(VirForwardGameApp);
+        const rendered = renderEmptyElement(VirForwardGameApp);
     });
 });
