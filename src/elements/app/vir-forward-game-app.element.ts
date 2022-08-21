@@ -1,14 +1,16 @@
-import {mapObject} from 'augment-vir';
-import {assign, defineElementNoInputs, html, listen} from 'element-vir';
+import {assign, defineElementNoInputs, html} from 'element-vir';
 import {SpaRouter} from 'spa-router-vir';
-import {areAnyGamepadInputsActive, GamepadMapping} from '../../data/gamepad/gamepad';
+import {GameLoopHandler} from '../../data/game-loop';
+import {GamepadMapping} from '../../data/gamepad/gamepad';
+import {GamepadLoopHandler} from '../../data/gamepad/gamepad-loop-handler';
 import {
     defaultForwardGameAppRoute,
     ForwardGameAppRoute,
     getForwardGameAppRouter,
 } from '../../router/app-router';
 import {VirGamepadConnectionIndicator} from '../gamepad-connection-indicators.element';
-import {VirGamepadReader} from '../gamepad-reader.element';
+
+const masterGameLoop = new GameLoopHandler();
 
 export const VirForwardGameApp = defineElementNoInputs({
     tagName: 'vir-forward-game-app',
@@ -18,6 +20,8 @@ export const VirForwardGameApp = defineElementNoInputs({
         currentRoute: defaultForwardGameAppRoute,
         gamepadMapping: {} as GamepadMapping,
         activeGamepads: {} as Record<number, boolean>,
+        gameLoop: masterGameLoop,
+        gamepadHandler: new GamepadLoopHandler(masterGameLoop),
     },
     initCallback: ({state, updateState}) => {
         updateState({
@@ -31,20 +35,11 @@ export const VirForwardGameApp = defineElementNoInputs({
     },
     renderCallback: ({state, updateState}) => {
         return html`
-            hello there: ${state.currentRoute.paths[0]}
-            <${VirGamepadReader}
-                ${listen(VirGamepadReader.events.gamepadChange, (event) => {
-                    updateState({
-                        gamepadMapping: event.detail,
-                        activeGamepads: mapObject(event.detail, (key, gamepad) => {
-                            return areAnyGamepadInputsActive(gamepad);
-                        }),
-                    });
-                })}
-            ></${VirGamepadReader}>
+            push buttons on your controller
             <${VirGamepadConnectionIndicator}
                 ${assign(VirGamepadConnectionIndicator, {
-                    gamepadsWithButtonsPushed: state.activeGamepads,
+                    gamepadHandler: state.gamepadHandler,
+                    gamepadInputSettings: {},
                 })}
             ></${VirGamepadConnectionIndicator}>
         `;
