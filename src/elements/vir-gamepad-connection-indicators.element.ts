@@ -1,12 +1,13 @@
 import {areJsonEqual, getObjectTypedKeys, mapObject} from 'augment-vir';
 import {css, defineElement, html} from 'element-vir';
 import {TemplateResult} from 'lit';
-import {areAnyGamepadInputsActive, GamepadInputSettings} from '../data/gamepad/gamepad-input';
+import {areAnyGamepadInputsActive} from '../data/gamepad/gamepad-input';
 import {GamepadLoopHandler} from '../data/gamepad/gamepad-loop-handler';
+import {GamepadSettings} from '../data/settings/gamepad-settings';
 
 export type ConnectionIndicatorInputs = {
     gamepadHandler: GamepadLoopHandler;
-    gamepadInputSettings: GamepadInputSettings;
+    gamepadInputSettings: GamepadSettings;
 };
 
 export const VirGamepadConnectionIndicator = defineElement<ConnectionIndicatorInputs>()({

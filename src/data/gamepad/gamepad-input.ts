@@ -1,14 +1,5 @@
 import {Writeable} from 'augment-vir';
-
-export type GamepadInputSettings = Readonly<
-    Record<
-        string,
-        {
-            axesDeadZones: Readonly<Record<number, number>>;
-            buttonDeadZones: Readonly<Record<number, number>>;
-        }
-    >
->;
+import {GamepadSettings} from '../settings/gamepad-settings';
 
 export type GamepadInput = {
     axes: readonly number[];
@@ -17,8 +8,8 @@ export type GamepadInput = {
 
 const defaultDeadZone = 0.09;
 
-export function readGamepadInput(gamepad: Gamepad, settings: GamepadInputSettings): GamepadInput {
-    const currentGamepadSettings = settings[gamepad.id];
+export function readGamepadInput(gamepad: Gamepad, settings: GamepadSettings): GamepadInput {
+    const currentGamepadSettings = settings.deadZones[gamepad.id];
 
     const axes: GamepadInput['axes'] = gamepad.axes.map((axeInput, axeIndex) => {
         const deadZone: number = currentGamepadSettings?.axesDeadZones[axeIndex] ?? defaultDeadZone;
@@ -44,7 +35,7 @@ export function readGamepadInput(gamepad: Gamepad, settings: GamepadInputSetting
     };
 }
 
-export function areAnyGamepadInputsActive(gamepad: Gamepad, settings: GamepadInputSettings) {
+export function areAnyGamepadInputsActive(gamepad: Gamepad, settings: GamepadSettings) {
     const readInputs = readGamepadInput(gamepad, settings);
 
     return (
