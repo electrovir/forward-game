@@ -1,6 +1,6 @@
 import {LoopHandler} from './loop-handler';
 
-export class GameLoopHandler extends LoopHandler<void, never> {
+export class GameLoopHandler extends LoopHandler<void, void> {
     constructor() {
         super();
         this.startGameLoop();
@@ -13,7 +13,7 @@ export class GameLoopHandler extends LoopHandler<void, never> {
     }
 
     private runGameLoop(timestamp: number) {
-        this.fireLoopCallbacks(timestamp);
+        this.fireLoopCallbacks(timestamp, undefined);
         requestAnimationFrame((timestamp) => {
             this.runGameLoop(timestamp);
         });

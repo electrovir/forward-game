@@ -1,6 +1,6 @@
 import {assign, defineElementNoInputs, html, listen} from 'element-vir';
+import {AllDeviceInputHandler} from '../data/all-device-input-handler';
 import {GameLoopHandler} from '../data/game-loop';
-import {GamepadLoopHandler} from '../data/gamepad/gamepad-loop-handler';
 import {getGameSettings} from '../data/settings/game-settings';
 import {defaultForwardGameAppRoute} from '../router/app-router';
 import {VirAssignControls} from './route-pages/assign-controls.element';
@@ -14,7 +14,7 @@ export const VirForwardGameApp = defineElementNoInputs({
     stateInit: {
         currentRoute: defaultForwardGameAppRoute,
         gameLoop: masterGameLoop,
-        gamepadHandler: new GamepadLoopHandler(masterGameLoop),
+        inputHandler: new AllDeviceInputHandler(masterGameLoop),
         gameSettings: getGameSettings(),
     },
     renderCallback: ({state, updateState}) => {
@@ -31,13 +31,13 @@ export const VirForwardGameApp = defineElementNoInputs({
                 push buttons on your controller
                 <${VirGamepadConnectionIndicator}
                     ${assign(VirGamepadConnectionIndicator, {
-                        gamepadHandler: state.gamepadHandler,
+                        inputHandler: state.inputHandler,
                         gamepadInputSettings: state.gameSettings.gamepadSettings,
                     })}
                 ></${VirGamepadConnectionIndicator}>
                 <${VirAssignControls}
                     ${assign(VirAssignControls, {
-                        gamepadHandler: state.gamepadHandler,
+                        inputHandler: state.inputHandler,
                         gameSettings: state.gameSettings,
                     })}
                 ></${VirAssignControls}>

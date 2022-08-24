@@ -1,12 +1,12 @@
 import {areJsonEqual, mapObject} from 'augment-vir';
 import {css, defineElement, html, listen} from 'element-vir';
 import {TemplateResult} from 'lit';
-import {GamepadLoopHandler} from '../../data/gamepad/gamepad-loop-handler';
+import {AllDeviceInputHandler} from '../../data/all-device-input-handler';
 import {ForwardGameSettings} from '../../data/settings/game-settings';
 import {InputBindingSettings, keyboardDevice} from '../../data/settings/input-binding-settings';
 
 export type AssignControlsInputs = {
-    gamepadHandler: GamepadLoopHandler;
+    inputHandler: AllDeviceInputHandler;
     gameSettings: ForwardGameSettings;
 };
 
@@ -63,8 +63,8 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
         currentlySelectedDevice: keyboardDevice,
     },
     initCallback: ({inputs, state, updateState}) => {
-        inputs.gamepadHandler.addLoopCallback((newGamepadMapping) => {
-            const newGamepadIds = mapObject(newGamepadMapping, (index, gamepad) => {
+        inputs.inputHandler.addLoopCallback((allDeviceInputs) => {
+            const newGamepadIds = mapObject(allDeviceInputs.gamepad, (index, gamepad) => {
                 return gamepad.id;
             });
 

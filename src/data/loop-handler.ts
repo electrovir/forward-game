@@ -34,19 +34,19 @@ export abstract class LoopHandler<CallbackInput, TriggerInput> {
 
     public addLoopTrigger(triggerLoop: LoopHandler<TriggerInput, any>): string {
         return triggerLoop.addLoopCallback((input, timestamp) => {
-            this.fireLoopCallbacks(timestamp);
+            this.fireLoopCallbacks(timestamp, input);
         });
     }
 
-    protected abstract generateCallbackInput(timestamp: number): CallbackInput;
+    protected abstract generateCallbackInput(timestamp: number, input: TriggerInput): CallbackInput;
 
-    protected fireLoopCallbacks(timestamp: number) {
+    protected fireLoopCallbacks(timestamp: number, input: TriggerInput) {
         // if we don't have any callbacks, there's no point in doing anything
         if (!this.loopCallbacks.size || !this.shouldRunCallbacks) {
             return;
         }
 
-        const callbackInput = this.generateCallbackInput(timestamp);
+        const callbackInput = this.generateCallbackInput(timestamp, input);
 
         this.loopCallbacks.forEach((loopCallbackDetails) => {
             if (loopCallbackDetails.timeout) {

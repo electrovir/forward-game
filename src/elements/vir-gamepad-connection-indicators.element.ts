@@ -1,12 +1,12 @@
 import {areJsonEqual, getObjectTypedKeys, mapObject} from 'augment-vir';
 import {css, defineElement, html} from 'element-vir';
 import {TemplateResult} from 'lit';
+import {AllDeviceInputHandler} from '../data/all-device-input-handler';
 import {areAnyGamepadInputsActive} from '../data/gamepad/gamepad-input';
-import {GamepadLoopHandler} from '../data/gamepad/gamepad-loop-handler';
 import {GamepadSettings} from '../data/settings/gamepad-settings';
 
 export type ConnectionIndicatorInputs = {
-    gamepadHandler: GamepadLoopHandler;
+    inputHandler: AllDeviceInputHandler;
     gamepadInputSettings: GamepadSettings;
 };
 
@@ -22,15 +22,15 @@ export const VirGamepadConnectionIndicator = defineElement<ConnectionIndicatorIn
         }
 
         .glowing {
-            animation: glow 200ms infinite alternate;
+            animation: glow 200ms;
         }
 
         @keyframes glow {
             0% {
-                filter: drop-shadow(0 0 1px red);
+                filter: drop-shadow(0 0 4px red);
             }
             100% {
-                filter: drop-shadow(0 0 4px red);
+                filter: drop-shadow(0 0 1px red);
             }
         }
     `,
@@ -38,8 +38,8 @@ export const VirGamepadConnectionIndicator = defineElement<ConnectionIndicatorIn
         activeGamepads: {} as Record<number, boolean>,
     },
     initCallback: ({inputs, state, updateState}) => {
-        inputs.gamepadHandler.addLoopCallback((newGamepadMapping) => {
-            const newActiveGamepads = mapObject(newGamepadMapping, (index, gamepad) => {
+        inputs.inputHandler.addLoopCallback((allInputs) => {
+            const newActiveGamepads = mapObject(allInputs.gamepad, (index, gamepad) => {
                 return areAnyGamepadInputsActive(gamepad, inputs.gamepadInputSettings);
             });
 
