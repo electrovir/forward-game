@@ -1,6 +1,6 @@
 import {GameLoopHandler} from './game-loop';
-import {GamepadMapping} from './gamepad/gamepad';
 import {GamepadLoopHandler} from './gamepad/gamepad-loop-handler';
+import {GamepadMapping} from './gamepad/gamepad-mapping';
 import {KeyboardInputHandler} from './keyboard-input-handler';
 import {LoopHandler} from './loop-handler';
 

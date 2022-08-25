@@ -1,4 +1,15 @@
-export const keyboardDevice = 'keyboard';
+import {GamepadWithInputs} from '../gamepad/gamepad-input';
+
+export const keyboardDevice = {
+    index: -1,
+    id: 'keyboard',
+} as const;
+
+export type InputDevice = typeof keyboardDevice | GamepadWithInputs;
+
+export function isGamepad(inputDevice: InputDevice): inputDevice is GamepadWithInputs {
+    return inputDevice !== keyboardDevice;
+}
 
 export type InputBinding =
     | {

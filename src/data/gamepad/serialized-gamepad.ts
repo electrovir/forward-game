@@ -1,5 +1,6 @@
 import {areJsonEqual, mapObject} from 'augment-vir';
-import {GamepadMapping} from './gamepad';
+import {GamepadWithInputs} from './gamepad-input';
+import {GamepadMapping} from './gamepad-mapping';
 
 export type SerializedGamepadButton = Readonly<{
     pressed: boolean;
@@ -18,7 +19,17 @@ export type SerializedGamepad = Readonly<{
     serialized: true;
 }>;
 
-export type SerializedGamepadMapping = Readonly<Record<number, SerializedGamepad>>;
+export type SerializedGamepadWithInputs = Readonly<{
+    id: string;
+    index: number;
+    gamepad: SerializedGamepad;
+    inputs: {
+        axes: readonly number[];
+        buttons: readonly SerializedGamepadButton[];
+    };
+}>;
+
+export type SerializedGamepadMapping = Readonly<Record<number, SerializedGamepadWithInputs>>;
 
 export function serializeGamepadButton(gamepadButton: GamepadButton): SerializedGamepadButton {
     return {
@@ -42,8 +53,23 @@ export function serializeGamepad(gamepad: Gamepad): SerializedGamepad {
     };
 }
 
+export function serializeGamepadWithInputs(
+    gamepadWithInputs: GamepadWithInputs,
+): SerializedGamepadWithInputs {
+    const serializedGamepad = serializeGamepad(gamepadWithInputs.gamepad);
+    return {
+        id: gamepadWithInputs.id,
+        index: gamepadWithInputs.index,
+        gamepad: serializedGamepad,
+        inputs: {
+            axes: serializedGamepad.axes,
+            buttons: serializedGamepad.buttons,
+        },
+    };
+}
+
 export function serializeGamepadMapping(mapping: GamepadMapping): SerializedGamepadMapping {
-    return mapObject(mapping, (key, value) => serializeGamepad(value));
+    return mapObject(mapping, (key, value) => serializeGamepadWithInputs(value));
 }
 
 export function areGamepadMappingsEqual(

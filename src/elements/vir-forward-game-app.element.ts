@@ -32,7 +32,6 @@ export const VirForwardGameApp = defineElementNoInputs({
                 <${VirGamepadConnectionIndicator}
                     ${assign(VirGamepadConnectionIndicator, {
                         inputHandler: state.inputHandler,
-                        gamepadInputSettings: state.gameSettings.gamepadSettings,
                     })}
                 ></${VirGamepadConnectionIndicator}>
                 <${VirAssignControls}

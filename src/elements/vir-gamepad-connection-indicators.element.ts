@@ -3,11 +3,9 @@ import {css, defineElement, html} from 'element-vir';
 import {TemplateResult} from 'lit';
 import {AllDeviceInputHandler} from '../data/all-device-input-handler';
 import {areAnyGamepadInputsActive} from '../data/gamepad/gamepad-input';
-import {GamepadSettings} from '../data/settings/gamepad-settings';
 
 export type ConnectionIndicatorInputs = {
     inputHandler: AllDeviceInputHandler;
-    gamepadInputSettings: GamepadSettings;
 };
 
 export const VirGamepadConnectionIndicator = defineElement<ConnectionIndicatorInputs>()({
@@ -40,7 +38,7 @@ export const VirGamepadConnectionIndicator = defineElement<ConnectionIndicatorIn
     initCallback: ({inputs, state, updateState}) => {
         inputs.inputHandler.addLoopCallback((allInputs) => {
             const newActiveGamepads = mapObject(allInputs.gamepad, (index, gamepad) => {
-                return areAnyGamepadInputsActive(gamepad, inputs.gamepadInputSettings);
+                return areAnyGamepadInputsActive(gamepad.inputs);
             });
 
             if (!areJsonEqual(newActiveGamepads, state.activeGamepads)) {
