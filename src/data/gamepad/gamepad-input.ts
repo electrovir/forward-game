@@ -1,17 +1,11 @@
+import {areJsonEqual} from 'augment-vir';
 import {GamepadSettings} from '../settings/gamepad-settings';
-import {
-    SerializedGamepad,
-    SerializedGamepadInputs,
-    SerializedGamepadWithInputs,
-} from './serialized-gamepad';
+import {GamepadInputs, SerializedGamepad} from './serialized-gamepad';
 
 const defaultDeadZone = 0.09;
 
-export function maskGamepadInputs(
-    a: SerializedGamepadInputs,
-    b: SerializedGamepadInputs,
-): SerializedGamepadInputs {
-    const finalInputs: SerializedGamepadInputs = {
+export function maskGamepadInputs(a: GamepadInputs, b: GamepadInputs): GamepadInputs {
+    const finalInputs: GamepadInputs = {
         axes: a.axes.map((aAxe, axeIndex) => {
             return b.axes[axeIndex] || aAxe;
         }),
@@ -23,17 +17,17 @@ export function maskGamepadInputs(
     return finalInputs;
 }
 
-export function readGamepadInput(
+export function normalizeGamepadInput(
     gamepad: SerializedGamepad,
     settings: GamepadSettings,
-): SerializedGamepadInputs {
+): GamepadInputs {
     const currentGamepadSettings = settings.deadZones[gamepad.id];
 
-    const axes: SerializedGamepadInputs['axes'] = gamepad.axes.map((axeInput, axeIndex) => {
+    const axes: GamepadInputs['axes'] = gamepad.inputs.axes.map((axeInput, axeIndex) => {
         const deadZone: number = currentGamepadSettings?.axesDeadZones[axeIndex] ?? defaultDeadZone;
         return Math.abs(axeInput) < deadZone ? 0 : axeInput;
     });
-    const buttons: SerializedGamepadInputs['buttons'] = gamepad.buttons.map(
+    const buttons: GamepadInputs['buttons'] = gamepad.inputs.buttons.map(
         (buttonInput, buttonIndex) => {
             const deadZone: number =
                 currentGamepadSettings?.axesDeadZones[buttonIndex] ?? defaultDeadZone;
@@ -53,22 +47,36 @@ export function readGamepadInput(
     };
 }
 
-export function areAnyGamepadInputsActive(gamepadInput: SerializedGamepadInputs): boolean {
-    return (
-        gamepadInput.axes.some((axe) => !!axe) ||
-        gamepadInput.buttons.some((button) => button.value)
-    );
+export function countActiveGamepadInputs(gamepadInputs: GamepadInputs): number {
+    return [
+        ...gamepadInputs.axes.filter((axe) => !!axe),
+        ...gamepadInputs.buttons.filter((button) => button.value),
+    ].length;
+}
+
+export function wasAGamepadInputPressed(
+    latestInputs: GamepadInputs,
+    previousInputs?: GamepadInputs,
+): boolean {
+    if (previousInputs) {
+        return (
+            !areJsonEqual(latestInputs, previousInputs) &&
+            countActiveGamepadInputs(latestInputs) > countActiveGamepadInputs(previousInputs)
+        );
+    } else {
+        return !!countActiveGamepadInputs(latestInputs);
+    }
 }
 
 export type InputLocation = {
     gamepadIndex: number;
     deviceName: string;
-    axeOrButton: keyof SerializedGamepadInputs;
+    axeOrButton: keyof GamepadInputs;
     inputIndex: number;
 };
 
 function findPressedInput(
-    gamepadInput: SerializedGamepadInputs,
+    gamepadInput: GamepadInputs,
 ): Pick<InputLocation, 'axeOrButton' | 'inputIndex'> | undefined {
     for (let i = 0; i < gamepadInput.buttons.length; i++) {
         const currentButton = gamepadInput.buttons[i];
@@ -92,13 +100,13 @@ function findPressedInput(
     return undefined;
 }
 
-export function getAnyInput(gamepad: SerializedGamepadWithInputs): InputLocation | undefined {
+export function getAnyInput(gamepad: SerializedGamepad): InputLocation | undefined {
     let pressedGamepadInput = findPressedInput(gamepad.inputs);
 
     if (pressedGamepadInput) {
         return {
-            gamepadIndex: gamepad.gamepad.index,
-            deviceName: gamepad.gamepad.id,
+            gamepadIndex: gamepad.index,
+            deviceName: gamepad.id,
             ...pressedGamepadInput,
         };
     } else {

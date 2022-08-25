@@ -4,27 +4,19 @@ export type SerializedGamepadButton = Readonly<{
     touched: boolean;
 }>;
 
-export type SerializedGamepad = Readonly<{
+export type GamepadInputs = Readonly<{
     axes: readonly number[];
     buttons: readonly SerializedGamepadButton[];
+}>;
+
+export type SerializedGamepad = Readonly<{
+    inputs: GamepadInputs;
     connected: boolean;
     id: string;
     index: number;
     mapping: string;
     timestamp: number;
     serialized: true;
-}>;
-
-export type SerializedGamepadInputs = Readonly<{
-    axes: readonly number[];
-    buttons: readonly SerializedGamepadButton[];
-}>;
-
-export type SerializedGamepadWithInputs = Readonly<{
-    id: string;
-    index: number;
-    gamepad: SerializedGamepad;
-    inputs: SerializedGamepadInputs;
 }>;
 
 export function serializeGamepadButton(gamepadButton: GamepadButton): SerializedGamepadButton {
@@ -38,8 +30,10 @@ export function serializeGamepadButton(gamepadButton: GamepadButton): Serialized
 export function serializeGamepad(gamepad: Gamepad): SerializedGamepad {
     // basically include everything but the haptic stuff since those include functions
     return {
-        axes: gamepad.axes,
-        buttons: gamepad.buttons.map(serializeGamepadButton),
+        inputs: {
+            axes: gamepad.axes,
+            buttons: gamepad.buttons.map(serializeGamepadButton),
+        },
         connected: gamepad.connected,
         id: gamepad.id,
         index: gamepad.index,

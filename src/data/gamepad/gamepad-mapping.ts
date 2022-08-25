@@ -1,16 +1,16 @@
 import {areJsonEqual} from 'augment-vir';
 import {maskGamepadInputs} from './gamepad-input';
-import {SerializedGamepadWithInputs} from './serialized-gamepad';
+import {SerializedGamepad} from './serialized-gamepad';
 
-export type GamepadMapping = Record<number, SerializedGamepadWithInputs>;
+export type GamepadMapping = Record<number, SerializedGamepad>;
 
-export type GamepadIdMapping = Record<string, SerializedGamepadWithInputs>;
+export type GamepadIdMapping = Record<string, SerializedGamepad>;
 
 export function createGamepadIdMapping(gamepadMapping: GamepadIdMapping): GamepadIdMapping {
     const idInputMapping: GamepadIdMapping = {};
 
     Object.values(gamepadMapping).forEach((gamepadWithInputs) => {
-        const id = gamepadWithInputs.gamepad.id;
+        const id = gamepadWithInputs.id;
         const currentInputsForId = idInputMapping[id];
 
         if (currentInputsForId) {
@@ -34,7 +34,7 @@ export function newGamepadsWereConnected(
     previous: GamepadMapping,
     current: GamepadMapping,
 ): boolean {
-    const previousIndexes = Object.keys(previous).sort();
-    const currentIndexes = Object.keys(current).sort();
+    const previousIndexes = Object.keys(previous);
+    const currentIndexes = Object.keys(current);
     return !areJsonEqual(previousIndexes, currentIndexes);
 }

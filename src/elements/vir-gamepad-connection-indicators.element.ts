@@ -1,8 +1,8 @@
-import {areJsonEqual, getObjectTypedKeys, mapObject} from 'augment-vir';
+import {areJsonEqual, getObjectTypedKeys} from 'augment-vir';
 import {css, defineElement, html} from 'element-vir';
 import {TemplateResult} from 'lit';
-import {AllDeviceInputHandler} from '../data/all-device-input-handler';
-import {areAnyGamepadInputsActive} from '../data/gamepad/gamepad-input';
+import {AllDeviceInputHandler, AllDeviceInputs} from '../data/all-device-input-handler';
+import {wasAGamepadInputPressed} from '../data/gamepad/gamepad-input';
 
 export type ConnectionIndicatorInputs = {
     inputHandler: AllDeviceInputHandler;
@@ -33,28 +33,46 @@ export const VirGamepadConnectionIndicator = defineElement<ConnectionIndicatorIn
         }
     `,
     stateInit: {
-        activeGamepads: {} as Record<number, boolean>,
+        currentInputDevices: {} as AllDeviceInputs,
+        previousInputDevices: {} as AllDeviceInputs,
+        lastActiveGamepadTimestamps: {} as Record<number, number>,
     },
     initCallback: ({inputs, state, updateState}) => {
         inputs.inputHandler.addLoopCallback((allInputs) => {
-            const newActiveGamepads = mapObject(allInputs.gamepad, (index, gamepad) => {
-                return areAnyGamepadInputsActive(gamepad.inputs);
-            });
-
-            if (!areJsonEqual(allInputs.gamepad, state.activeGamepads)) {
+            if (!areJsonEqual(allInputs.gamepad, state.currentInputDevices)) {
                 updateState({
-                    activeGamepads: newActiveGamepads,
+                    currentInputDevices: allInputs,
+                    previousInputDevices: state.currentInputDevices,
                 });
             }
         });
     },
-    renderCallback: ({state}) => {
+    renderCallback: ({state, updateState}) => {
         return html`
-            ${getObjectTypedKeys(state.activeGamepads)
+            ${getObjectTypedKeys(state.currentInputDevices.gamepad)
                 .sort()
                 .map((gamepadIndex) => {
-                    const isGamepadActive = !!state.activeGamepads[gamepadIndex];
-                    return getGamepadIcon(isGamepadActive);
+                    const currentGamepad = state.currentInputDevices.gamepad[gamepadIndex];
+                    if (!currentGamepad) {
+                        throw new Error(`Failed to find gamepad at index ${gamepadIndex}`);
+                    }
+                    const previousGamepad = state.previousInputDevices.gamepad[gamepadIndex];
+                    const isGamepadActive = !!wasAGamepadInputPressed(
+                        currentGamepad.inputs,
+                        previousGamepad?.inputs,
+                    );
+                    if (isGamepadActive) {
+                        updateState({
+                            lastActiveGamepadTimestamps: {
+                                ...state.lastActiveGamepadTimestamps,
+                                [gamepadIndex]: Date.now(),
+                            },
+                        });
+                    }
+                    return getGamepadIcon(
+                        (state.lastActiveGamepadTimestamps[gamepadIndex] ?? Infinity) >
+                            Date.now() - 100,
+                    );
                 })}
         `;
     },
