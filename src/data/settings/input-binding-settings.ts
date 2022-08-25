@@ -1,13 +1,13 @@
-import {GamepadWithInputs} from '../gamepad/gamepad-input';
+import {SerializedGamepadWithInputs} from '../gamepad/serialized-gamepad';
 
 export const keyboardDevice = {
     index: -1,
     id: 'keyboard',
 } as const;
 
-export type InputDevice = typeof keyboardDevice | GamepadWithInputs;
+export type InputDevice = typeof keyboardDevice | SerializedGamepadWithInputs;
 
-export function isGamepad(inputDevice: InputDevice): inputDevice is GamepadWithInputs {
+export function isGamepad(inputDevice: InputDevice): inputDevice is SerializedGamepadWithInputs {
     return inputDevice !== keyboardDevice;
 }
 

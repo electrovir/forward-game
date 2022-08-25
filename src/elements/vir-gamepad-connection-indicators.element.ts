@@ -41,7 +41,7 @@ export const VirGamepadConnectionIndicator = defineElement<ConnectionIndicatorIn
                 return areAnyGamepadInputsActive(gamepad.inputs);
             });
 
-            if (!areJsonEqual(newActiveGamepads, state.activeGamepads)) {
+            if (!areJsonEqual(allInputs.gamepad, state.activeGamepads)) {
                 updateState({
                     activeGamepads: newActiveGamepads,
                 });
