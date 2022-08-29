@@ -6,6 +6,7 @@ import {getGameSettings, saveGameSettings} from '../data/settings/game-settings'
 import {defaultForwardGameAppRoute} from '../router/app-router';
 import {UpdateGameSettings} from './global-events/update-game-settings.event';
 import {VirAssignControls} from './route-pages/assign-controls/vir-assign-controls.element';
+import {VirGame} from './route-pages/game/vir-game.element';
 import {VirForwardGameAppRouting} from './vir-app-routing.element';
 
 const masterGameLoop = new GameLoopHandler();
@@ -71,7 +72,7 @@ export const VirForwardGameApp = defineElementNoInputs({
                                 })}
                             ></${VirAssignControls}>`
                         : html`
-                              game
+                              <${VirGame}></${VirGame}>
                           `
                 }
             </main>
