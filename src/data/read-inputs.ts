@@ -10,9 +10,9 @@ export function readInputs(
     bindings: DeviceBindings,
 ): ReadInputsOutput {
     const activeControls = currentInputs
-        .map((currentInput): [AvailableControls, number] | undefined => {
+        .map((currentInput): [AvailableControls, number][] | undefined => {
             if (currentInput.deviceKey === selectedDeviceKey) {
-                const assignedControl = getEnumTypedKeys(bindings).find((control) => {
+                const assignedControls = getEnumTypedKeys(bindings).filter((control) => {
                     const binding = bindings[control];
                     return (
                         binding.inputName === currentInput.inputName &&
@@ -20,16 +20,17 @@ export function readInputs(
                     );
                 });
 
-                if (assignedControl) {
-                    return [
+                if (assignedControls.length) {
+                    return assignedControls.map((assignedControl) => [
                         assignedControl,
                         Math.abs(currentInput.inputValue),
-                    ];
+                    ]);
                 }
             }
             return undefined;
         })
-        .filter(isTruthy);
+        .filter(isTruthy)
+        .flat();
 
     const mappedValues = activeControls.reduce((accum, value) => {
         accum[value[0]] = value[1];
