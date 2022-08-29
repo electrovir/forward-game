@@ -22,6 +22,7 @@ function loadSavedGameSettings(): ForwardGameSettings | undefined {
 
     try {
         const parsedSettings = JSON.parse(storedValue);
+        console.log({parsedSettings});
         return updateGameSettings(parsedSettings);
     } catch (jsonParseError) {
         console.error(`Failed to load game settings: ${jsonParseError}`);

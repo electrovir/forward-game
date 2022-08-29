@@ -8,7 +8,7 @@ export type ForwardGameAppRoute = [AppRoute];
 export type ForwardGameAppFullRoute = Required<Readonly<FullRoute<ForwardGameAppRoute>>>;
 
 export const defaultForwardGameAppRoute: ForwardGameAppFullRoute = {
-    paths: [AppRoute.Home],
+    paths: [AppRoute.AssignControls],
     search: undefined,
     hash: undefined,
 };

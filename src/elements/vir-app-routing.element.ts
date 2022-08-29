@@ -1,4 +1,4 @@
-import {defineElement, defineElementEvent, html} from 'element-vir';
+import {css, defineElement, defineElementEvent, html} from 'element-vir';
 import {areRoutesEqual, SpaRouter} from 'spa-router-vir';
 import {
     ForwardGameAppFullRoute,
@@ -12,6 +12,11 @@ export const VirForwardGameAppRouting = defineElement<{
     stateInit: {
         router: undefined as any as SpaRouter<ForwardGameAppRoute>,
     },
+    styles: css`
+        :host {
+            display: none;
+        }
+    `,
     tagName: 'vir-forward-game-app-routing',
     events: {
         routeChange: defineElementEvent<ForwardGameAppFullRoute>(),

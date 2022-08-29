@@ -1,12 +1,4 @@
-export type GamepadDeadZoneSettings = Readonly<
-    Record<
-        string,
-        {
-            axesDeadZones: Readonly<Record<number, number>>;
-            buttonDeadZones: Readonly<Record<number, number>>;
-        }
-    >
->;
+import {GamepadDeadZoneSettings} from 'input-device-handler';
 
 export type GamepadSettings = Readonly<{
     deadZones: GamepadDeadZoneSettings;

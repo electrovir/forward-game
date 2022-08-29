@@ -30,8 +30,10 @@
         "test:types": "tsc --noEmit"
     },
     "dependencies": {
-        "augment-vir": "2.5.0",
+        "augment-vir": "2.5.1",
         "element-vir": "6.0.0-beta.1",
+        "input-device-handler": "0.0.4",
+        "lit": "2.3.1",
         "spa-router-vir": "2.0.0"
     },
     "devDependencies": {
