@@ -1,26 +1,26 @@
 import {assign, css, defineElementNoInputs, html, listen} from 'element-vir';
 import {InputDeviceHandler} from 'input-device-handler';
 import {AppRoute} from '../data/app-routes';
-import {GameLoopHandler} from '../data/game-loop';
+import {BasicInputDevice} from '../data/basic-input-device';
 import {getGameSettings, saveGameSettings} from '../data/settings/game-settings';
 import {defaultForwardGameAppRoute} from '../router/app-router';
-import {UpdateGameSettings} from './global-events/update-game-settings.event';
+import {BreakingErrorEvent} from './global-events/breaking-error.event';
+import {UpdateGameSettingsEvent} from './global-events/update-game-settings.event';
 import {VirAssignControls} from './route-pages/assign-controls/vir-assign-controls.element';
 import {VirGame} from './route-pages/game/vir-game.element';
 import {VirForwardGameAppRouting} from './vir-app-routing.element';
 
-const masterGameLoop = new GameLoopHandler();
 const initialGameSettings = getGameSettings();
 
 export const VirForwardGameApp = defineElementNoInputs({
     tagName: 'vir-forward-game-app',
     stateInit: {
         currentRoute: defaultForwardGameAppRoute,
-        gameLoop: masterGameLoop,
         inputHandler: new InputDeviceHandler({
             gamepadDeadZoneSettings: initialGameSettings.gamepadSettings.deadZones,
         }),
         gameSettings: initialGameSettings,
+        selectedDevice: undefined as BasicInputDevice | undefined,
     },
     styles: css`
         :host,
@@ -39,11 +39,14 @@ export const VirForwardGameApp = defineElementNoInputs({
     renderCallback: ({state, updateState}) => {
         return html`
             <main
-                ${listen(UpdateGameSettings, (event) => {
+                ${listen(UpdateGameSettingsEvent, (event) => {
                     saveGameSettings(event.detail);
                     updateState({
                         gameSettings: event.detail,
                     });
+                })}
+                ${listen(BreakingErrorEvent, (event) => {
+                    console.error(event.detail);
                 })}
             >
                 <${VirForwardGameAppRouting}
@@ -55,14 +58,15 @@ export const VirForwardGameApp = defineElementNoInputs({
                     })}
                 ></${VirForwardGameAppRouting}>
                 ${
-                    state.currentRoute.paths[0] === AppRoute.AssignControls
+                    state.currentRoute.paths[0] === AppRoute.AssignControls || !state.selectedDevice
                         ? html`
                             <${VirAssignControls}
                                 ${assign(VirAssignControls, {
                                     inputHandler: state.inputHandler,
                                     gameSettings: state.gameSettings,
+                                    selectedDevice: state.selectedDevice,
                                 })}
-                                ${listen(VirAssignControls.events.assignmentSuccessful, () => {
+                                ${listen(VirAssignControls.events.assignmentDone, () => {
                                     updateState({
                                         currentRoute: {
                                             ...state.currentRoute,
@@ -70,10 +74,26 @@ export const VirForwardGameApp = defineElementNoInputs({
                                         },
                                     });
                                 })}
+                                ${listen(VirAssignControls.events.changeDevice, (event) => {
+                                    const selectedDevice = event.detail;
+                                    updateState({
+                                        selectedDevice: selectedDevice,
+                                    });
+                                })}
                             ></${VirAssignControls}>`
                         : html`
-                              <${VirGame}></${VirGame}>
-                          `
+                            <${VirGame} ${assign(VirGame, {
+                              gameSettings: state.gameSettings,
+                              inputHandler: state.inputHandler,
+                              selectedDevice: state.selectedDevice,
+                          })} ${listen(VirGame.events.exit, () => {
+                              updateState({
+                                  currentRoute: {
+                                      ...state.currentRoute,
+                                      paths: [AppRoute.AssignControls],
+                                  },
+                              });
+                          })}></${VirGame}>`
                 }
             </main>
         `;

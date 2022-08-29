@@ -1,4 +1,4 @@
-import {getObjectTypedValues, mapObject, typedHasOwnProperty} from 'augment-vir';
+import {getObjectTypedKeys, getObjectTypedValues, mapObject, randomString} from 'augment-vir';
 import {css, defineElement, defineElementEvent, html, listen} from 'element-vir';
 import {
     InputDeviceHandler,
@@ -16,13 +16,14 @@ import {
     DeviceBindings,
     hasAllBindings,
 } from '../../../data/settings/input-binding-settings';
-import {UpdateGameSettings} from '../../global-events/update-game-settings.event';
+import {UpdateGameSettingsEvent} from '../../global-events/update-game-settings.event';
 import {deviceBindingsStyles, getDeviceBindingsTemplate} from './device-bindings.template';
 import {getDeviceSelectorTemplate} from './device-selector.template';
 
 export type AssignControlsInputs = {
     inputHandler: InputDeviceHandler;
     gameSettings: ForwardGameSettings;
+    selectedDevice: BasicInputDevice | undefined;
 };
 
 const animationDurationMs: number = 700;
@@ -47,7 +48,8 @@ function removeOldAnimations(
 export const VirAssignControls = defineElement<AssignControlsInputs>()({
     tagName: 'vir-assign-controls',
     events: {
-        assignmentSuccessful: defineElementEvent<void>(),
+        assignmentDone: defineElementEvent<void>(),
+        changeDevice: defineElementEvent<BasicInputDevice>(),
     },
     styles: css`
         :host {
@@ -55,6 +57,7 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
             flex-direction: column;
             align-items: center;
             padding: 32px;
+            text-align: center;
         }
 
         .device-selector-wrapper {
@@ -148,19 +151,41 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
             cursor: pointer;
         }
 
-        .continue-button:hover {
+        .continue-button[disabled] {
+            cursor: auto;
+        }
+
+        .continue-button:not([disabled]):hover {
             background-color: lightblue;
         }
 
         ${deviceBindingsStyles};
     `,
     stateInit: {
-        selectedDeviceKey: 0 as PotentialDeviceKeys,
+        id: '',
         currentInputDevices: {} as Record<PotentialDeviceKeys, BasicInputDevice>,
         currentInputDeviceAnimations: {} as Record<PotentialDeviceKeys, InputDeviceAnimation[]>,
         selectedBindingControl: undefined as AvailableControls | undefined,
     },
-    initCallback: ({inputs, state, updateState, genericDispatch}) => {
+    initCallback: ({inputs, state, updateState, genericDispatch, dispatch, events}) => {
+        updateState({id: randomString()});
+
+        const latestResult = inputs.inputHandler.getLastPollResults();
+        if (latestResult) {
+            const currentDevices = getObjectTypedKeys(latestResult).reduce((accum, key) => {
+                const device = latestResult[key]!;
+                accum[key] = {
+                    deviceKey: device.deviceKey,
+                    deviceName: device.deviceName,
+                    deviceType: device.deviceType,
+                };
+                return accum;
+            }, {} as Record<PotentialDeviceKeys, BasicInputDevice>);
+            updateState({
+                currentInputDevices: currentDevices,
+            });
+        }
+
         inputs.inputHandler.addEventListener(
             InputDeviceHandlerEventTypeEnum.NewDevicesAdded,
             (event) => {
@@ -179,19 +204,13 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
 
                 const firstNewDevice = getObjectTypedValues(newDevices)[0];
 
-                const selectFirstNewDevice: Partial<Pick<typeof state, 'selectedDeviceKey'>> =
-                    firstNewDevice ? {selectedDeviceKey: firstNewDevice.deviceKey} : {};
-
-                const maybeFixSelectedDevice: Partial<Pick<typeof state, 'selectedDeviceKey'>> =
-                    typedHasOwnProperty(devices, state.selectedDeviceKey)
-                        ? {}
-                        : {selectedDeviceKey: keyboardDeviceKeySymbol};
-
                 updateState({
                     currentInputDevices: devices,
-                    ...maybeFixSelectedDevice,
-                    ...selectFirstNewDevice,
                 });
+
+                if (firstNewDevice) {
+                    dispatch(new events.changeDevice(firstNewDevice));
+                }
             },
         );
         inputs.inputHandler.addEventListener(
@@ -215,12 +234,15 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
 
                 if (isTryingToAssign) {
                     const inputToAssign = newInputs
-                        .filter((newInput) => newInput.deviceKey === state.selectedDeviceKey)
+                        .filter(
+                            (newInput) => newInput.deviceKey === inputs.selectedDevice?.deviceKey,
+                        )
                         .filter(
                             (newInput) => Math.abs(newInput.inputValue) > 0.7,
                             // ignore axe inputs for now cause we aren't using them properly
                             // !String(inputToAssign.inputName).startsWith('axe'),
                         )[0];
+
                     if (inputToAssign) {
                         inputToAssign.inputName;
 
@@ -234,7 +256,7 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
                         };
 
                         genericDispatch(
-                            new UpdateGameSettings({
+                            new UpdateGameSettingsEvent({
                                 ...inputs.gameSettings,
                                 bindings: {
                                     ...inputs.gameSettings.bindings,
@@ -280,9 +302,11 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
         );
     },
     renderCallback: ({state, updateState, inputs, dispatch, events}) => {
-        const currentDevice: BasicInputDevice =
-            state.currentInputDevices[state.selectedDeviceKey] ??
-            state.currentInputDevices[keyboardDeviceKeySymbol];
+        const currentDevice: BasicInputDevice | undefined =
+            inputs.selectedDevice?.deviceKey == undefined
+                ? undefined
+                : state.currentInputDevices[inputs.selectedDevice.deviceKey] ??
+                  state.currentInputDevices[keyboardDeviceKeySymbol];
 
         if (!currentDevice) {
             return html``;
@@ -290,7 +314,12 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
 
         return html`
             <h2>Configure Inputs</h2>
-            To connect a controller, push buttons on it.
+            <p>
+                Select a device to use.
+                <br />
+                <br />
+                To connect a controller, push buttons on it.
+            </p>
             <div class="device-selector-wrapper ${state.selectedBindingControl ? 'blocked' : ''}">
                 ${repeat(
                     getObjectTypedValues(state.currentInputDevices)
@@ -312,11 +341,9 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
                             inputDevice: currentDevice,
                             animations: currentDeviceAnimations ?? [],
                             selectedCallback: () => {
-                                updateState({
-                                    selectedDeviceKey: currentDevice.deviceKey,
-                                });
+                                dispatch(new events.changeDevice(currentDevice));
                             },
-                            selectedKey: state.selectedDeviceKey,
+                            selectedKey: inputs.selectedDevice?.deviceKey,
                             isTopLevel: false,
                         });
                     },
@@ -341,7 +368,7 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
                         inputs.gameSettings.bindings[currentDevice.deviceName]?.bindings,
                     )}
                     ${listen('click', () => {
-                        dispatch(new events.assignmentSuccessful());
+                        dispatch(new events.assignmentDone());
                     })}
                 >
                     Continue
