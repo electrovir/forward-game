@@ -23,6 +23,9 @@
     "[markdown]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
+    "[ruby]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
     "[scss]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
@@ -39,8 +42,7 @@
     "editor.rulers": [100],
     "editor.wordWrapColumn": 100,
     "files.associations": {
-        // for formatting
-        "*.drawio": "html"
+        "*.svg": "html"
     },
     "typescript.tsdk": "node_modules/typescript/lib"
 }

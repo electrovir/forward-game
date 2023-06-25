@@ -1,9 +1,0 @@
-{
-    "ignorePaths": ["diagrams/"],
-    "import": ".virmator/.cspell-base.json",
-    "words": [
-        "drawio",
-        "dodgerblue",
-        "skyblue"
-    ]
-}
