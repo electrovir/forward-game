@@ -32,7 +32,7 @@
     "devDependencies": {
         "concurrently": "^8.2.0",
         "cspell": "^6.31.1",
-        "esbuild": "^0.18.8",
+        "esbuild": "^0.18.11",
         "mono-vir": "^0.1.4",
         "npm-check-updates": "^16.10.13",
         "prettier": "^2.8.8",
@@ -47,6 +47,6 @@
         "virmator": "6.6.6"
     },
     "overrides": {
-        "make-dir": "npm:make-dir@v4.0.0"
+        "semver": "^7.5.3"
     }
 }
