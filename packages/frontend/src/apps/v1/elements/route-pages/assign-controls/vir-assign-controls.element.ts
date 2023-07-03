@@ -168,9 +168,12 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
         selectedBindingControl: undefined as AvailableControls | undefined,
     },
     initCallback: ({inputs, state, updateState, dispatch, events}) => {
+        console.log('init');
         updateState({id: randomString()});
 
         const latestResult = inputs.inputHandler.getLastPollResults();
+
+        console.log({latestResult});
         if (latestResult) {
             const currentDevices = getObjectTypedKeys(latestResult).reduce((accum, key) => {
                 const device = latestResult[key]!;
@@ -309,7 +312,9 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
                   state.currentInputDevices[inputDeviceKey.keyboard];
 
         if (!currentDevice) {
-            return html``;
+            return html`
+                no device
+            `;
         }
 
         return html`
