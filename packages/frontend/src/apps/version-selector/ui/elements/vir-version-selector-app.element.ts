@@ -38,7 +38,6 @@ export const VirVersionSelector = defineElementNoInputs({
             }: {
                 rootPath: GameRoutePath[0];
             }): Promise<DeclarativeElementDefinition | undefined> {
-                console.log('loading for', rootPath);
                 if (!isGameVersion(rootPath)) {
                     return undefined;
                 }
