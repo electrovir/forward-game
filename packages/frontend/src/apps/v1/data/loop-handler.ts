@@ -38,6 +38,12 @@ export abstract class LoopHandler<CallbackInput, TriggerInput> {
         });
     }
 
+    public destroy() {
+        Object.keys(this.loopCallbacks).forEach((callbackId) => {
+            this.removeLoopCallback(callbackId);
+        });
+    }
+
     protected abstract generateCallbackInput(timestamp: number, input: TriggerInput): CallbackInput;
 
     protected fireLoopCallbacks(timestamp: number, input: TriggerInput) {

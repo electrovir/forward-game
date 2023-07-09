@@ -48,6 +48,16 @@ export const VirForwardGameApp = defineElement<{currentRoute: GameFullRoute}>()(
             return html``;
         }
 
+        const showGame = !!(
+            inputs.currentRoute.paths[1] === V1RoutesEnum.Play && state.selectedDevice
+        );
+
+        if (showGame) {
+            state.inputHandler.pausePollingLoop();
+        } else {
+            state.inputHandler.startPollingLoop();
+        }
+
         return html`
             <main
                 ${listen(UpdateGameSettingsEvent, (event) => {
@@ -60,9 +70,30 @@ export const VirForwardGameApp = defineElement<{currentRoute: GameFullRoute}>()(
                     console.error(event.detail);
                 })}
             >
-                ${inputs.currentRoute.paths[1] === V1RoutesEnum.AssignControls ||
-                !state.selectedDevice
+                ${showGame
                     ? html`
+                          <${VirGame}
+                              ${assign(VirGame, {
+                                  gameSettings: state.gameSettings,
+                                  inputHandler: state.inputHandler,
+                                  selectedDevice: state.selectedDevice,
+                              })}
+                              ${listen(VirGame.events.exit, () => {
+                                  dispatch(
+                                      new ChangeRouteEvent({
+                                          route: {
+                                              paths: [
+                                                  gameVersionNames.v1,
+                                                  V1RoutesEnum.AssignControls,
+                                              ],
+                                          },
+                                          sanitized: false,
+                                      }),
+                                  );
+                              })}
+                          ></${VirGame}>
+                      `
+                    : html`
                           <${VirAssignControls}
                               ${assign(VirAssignControls, {
                                   inputHandler: state.inputHandler,
@@ -89,28 +120,6 @@ export const VirForwardGameApp = defineElement<{currentRoute: GameFullRoute}>()(
                                   });
                               })}
                           ></${VirAssignControls}>
-                      `
-                    : html`
-                          <${VirGame}
-                              ${assign(VirGame, {
-                                  gameSettings: state.gameSettings,
-                                  inputHandler: state.inputHandler,
-                                  selectedDevice: state.selectedDevice,
-                              })}
-                              ${listen(VirGame.events.exit, () => {
-                                  dispatch(
-                                      new ChangeRouteEvent({
-                                          route: {
-                                              paths: [
-                                                  gameVersionNames.v1,
-                                                  V1RoutesEnum.AssignControls,
-                                              ],
-                                          },
-                                          sanitized: false,
-                                      }),
-                                  );
-                              })}
-                          ></${VirGame}>
                       `}
             </main>
         `;

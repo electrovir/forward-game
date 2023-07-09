@@ -1,31 +1,38 @@
 import {getEnumTypedKeys, isTruthy} from '@augment-vir/common';
-import {AnyInputDeviceKey, DeviceInputValue} from 'input-device-handler';
+import {DeviceInputValue} from 'input-device-handler';
 import {AvailableControls, Binding, DeviceBindings} from './settings/input-binding-settings';
 
-export type ReadInputsOutput = Partial<Record<AvailableControls, number>>;
+export type ReadInputsOutput = Partial<
+    Record<
+        AvailableControls,
+        /**
+         * This number corresponds to the input device input value. For buttons this will be 0 or 1,
+         * for axes this will be some value between 1 and 0.
+         */
+        number
+    >
+>;
 
 export function readInputs(
-    selectedDeviceKey: AnyInputDeviceKey,
     currentInputs: DeviceInputValue[],
     bindings: DeviceBindings,
 ): ReadInputsOutput {
     const activeControls = currentInputs
         .map((currentInput): [AvailableControls, number][] | undefined => {
-            if (currentInput.deviceKey === selectedDeviceKey) {
-                const assignedControls = getEnumTypedKeys(bindings).filter((control) => {
-                    const binding = bindings[control];
-                    return (
-                        binding.inputName === currentInput.inputName &&
-                        matchesDirection(binding, currentInput)
-                    );
-                });
+            const assignedControls = getEnumTypedKeys(bindings).filter((control) => {
+                const binding = bindings[control];
 
-                if (assignedControls.length) {
-                    return assignedControls.map((assignedControl) => [
-                        assignedControl,
-                        Math.abs(currentInput.inputValue),
-                    ]);
-                }
+                return (
+                    binding.inputName === currentInput.inputName &&
+                    matchesDirection(binding, currentInput)
+                );
+            });
+
+            if (assignedControls.length) {
+                return assignedControls.map((assignedControl) => [
+                    assignedControl,
+                    Math.abs(currentInput.inputValue),
+                ]);
             }
             return undefined;
         })

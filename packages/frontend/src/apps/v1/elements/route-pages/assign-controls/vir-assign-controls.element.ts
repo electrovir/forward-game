@@ -1,14 +1,15 @@
 import {randomString} from '@augment-vir/browser';
-import {getObjectTypedKeys, getObjectTypedValues, mapObjectValues} from '@augment-vir/common';
+import {getObjectTypedValues, mapObjectValues} from '@augment-vir/common';
 import {css, defineElement, defineElementEvent, html, listen} from 'element-vir';
 import {
     AnyInputDeviceKey,
+    InputDevice,
+    InputDeviceEventTypeEnum,
     InputDeviceHandler,
-    InputDeviceHandlerEventTypeEnum,
     inputDeviceKey,
 } from 'input-device-handler';
 import {repeat} from 'lit/directives/repeat.js';
-import {BasicInputDevice} from '../../../data/basic-input-device';
+import {AllBasicInputDevices, BasicInputDevice} from '../../../data/basic-input-device';
 import {ForwardGameSettings} from '../../../data/settings/game-settings-type';
 import {
     AvailableControls,
@@ -43,6 +44,19 @@ function removeOldAnimations(
             (animation) => animation.timestamp > now - animationDurationMs,
         );
     });
+}
+
+function toBasicInputDevices(devices: InputDevice[]): AllBasicInputDevices {
+    const basicDevices: AllBasicInputDevices = devices.reduce((accum, newDevice) => {
+        accum[newDevice.deviceKey] = {
+            deviceKey: newDevice.deviceKey,
+            deviceName: newDevice.deviceName,
+            deviceType: newDevice.deviceType,
+        };
+        return accum;
+    }, {} as AllBasicInputDevices);
+
+    return basicDevices;
 }
 
 export const VirAssignControls = defineElement<AssignControlsInputs>()({
@@ -163,7 +177,7 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
     `,
     stateInitStatic: {
         id: '',
-        currentInputDevices: {} as Record<AnyInputDeviceKey, BasicInputDevice>,
+        currentInputDevices: {} as AllBasicInputDevices,
         currentInputDeviceAnimations: {} as Record<AnyInputDeviceKey, InputDeviceAnimation[]>,
         selectedBindingControl: undefined as AvailableControls | undefined,
     },
@@ -173,72 +187,46 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
         const latestResult = inputs.inputHandler.getLastPollResults();
 
         if (latestResult) {
-            const currentDevices = getObjectTypedKeys(latestResult).reduce((accum, key) => {
-                const device = latestResult[key]!;
-                accum[key] = {
-                    deviceKey: device.deviceKey,
-                    deviceName: device.deviceName,
-                    deviceType: device.deviceType,
-                };
-                return accum;
-            }, {} as Record<AnyInputDeviceKey, BasicInputDevice>);
+            const currentDevices = toBasicInputDevices(Object.values(latestResult));
 
             updateState({
                 currentInputDevices: currentDevices,
             });
 
             if (!inputs.selectedDevice) {
-                const lastDevice = getObjectTypedValues(currentDevices).slice(-1)[0];
-
-                if (lastDevice) {
-                    dispatch(new events.changeDevice(lastDevice));
-                }
+                dispatch(new events.changeDevice(currentDevices.keyboard));
             }
         }
 
-        inputs.inputHandler.addEventListener(
-            InputDeviceHandlerEventTypeEnum.NewDevicesAdded,
-            (event) => {
-                const newDevices: (typeof state)['currentInputDevices'] = event.detail.data.reduce(
-                    (accum, newDevice) => {
-                        accum[newDevice.deviceKey] = {
-                            deviceKey: newDevice.deviceKey,
-                            deviceName: newDevice.deviceName,
-                            deviceType: newDevice.deviceType,
-                        };
-                        return accum;
-                    },
-                    {} as (typeof state)['currentInputDevices'],
-                );
-                const devices = {...state.currentInputDevices, ...newDevices};
+        inputs.inputHandler.addEventListener(InputDeviceEventTypeEnum.NewDevicesAdded, (event) => {
+            const newDevices = toBasicInputDevices(event.detail.inputs);
+            const currentInputDevices = {...state.currentInputDevices, ...newDevices};
 
-                const firstNewDevice = getObjectTypedValues(newDevices)[0];
+            const lastNewDevice = getObjectTypedValues(newDevices).slice(-1)[0];
 
-                updateState({
-                    currentInputDevices: devices,
-                });
+            if (lastNewDevice) {
+                dispatch(new events.changeDevice(lastNewDevice));
+            }
+            updateState({
+                currentInputDevices: currentInputDevices,
+            });
+        });
 
-                if (firstNewDevice) {
-                    dispatch(new events.changeDevice(firstNewDevice));
-                }
-            },
-        );
+        inputs.inputHandler.addEventListener(InputDeviceEventTypeEnum.DevicesRemoved, (event) => {
+            const devices = {...state.currentInputDevices};
+
+            event.detail.inputs.forEach((removedDevice) => {
+                delete devices[removedDevice.deviceKey];
+            });
+            updateState({
+                currentInputDevices: devices,
+            });
+        });
+
         inputs.inputHandler.addEventListener(
-            InputDeviceHandlerEventTypeEnum.DevicesRemoved,
+            InputDeviceEventTypeEnum.CurrentInputsChanged,
             (event) => {
-                const devices = {...state.currentInputDevices};
-                event.detail.data.forEach((removedDevice) => {
-                    delete devices[removedDevice.deviceKey];
-                });
-                updateState({
-                    currentInputDevices: devices,
-                });
-            },
-        );
-        inputs.inputHandler.addEventListener(
-            InputDeviceHandlerEventTypeEnum.CurrentInputsChanged,
-            (event) => {
-                const newInputs = event.detail.data.newInputs;
+                const newInputs = event.detail.inputs.newInputs;
                 const isTryingToAssign = !!state.selectedBindingControl;
                 let inputAccepted = false;
 
@@ -247,11 +235,7 @@ export const VirAssignControls = defineElement<AssignControlsInputs>()({
                         .filter(
                             (newInput) => newInput.deviceKey === inputs.selectedDevice?.deviceKey,
                         )
-                        .filter(
-                            (newInput) => Math.abs(newInput.inputValue) > 0.7,
-                            // ignore axe inputs for now cause we aren't using them properly
-                            // !String(inputToAssign.inputName).startsWith('axe'),
-                        )[0];
+                        .filter((newInput) => Math.abs(newInput.inputValue) > 0.7)[0];
 
                     if (inputToAssign) {
                         inputToAssign.inputName;

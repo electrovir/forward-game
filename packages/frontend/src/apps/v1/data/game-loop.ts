@@ -14,6 +14,7 @@ export class GameLoopHandler extends LoopHandler<void, void> {
 
     private runGameLoop(timestamp: number) {
         this.fireLoopCallbacks(timestamp, undefined);
+
         requestAnimationFrame((timestamp) => {
             this.runGameLoop(timestamp);
         });
@@ -24,8 +25,6 @@ export class GameLoopHandler extends LoopHandler<void, void> {
     }
 
     private startGameLoop() {
-        requestAnimationFrame((timestamp) => {
-            this.runGameLoop(timestamp);
-        });
+        this.runGameLoop(performance.now());
     }
 }

@@ -118,7 +118,11 @@ function getBindingInput({
     currentlySelected: AvailableControls | undefined;
     selectedCallback: (control: AvailableControls) => void;
 }): TemplateResult {
-    const boundNameToDisplay = binding.inputName === '' ? 'N/A' : binding.inputName;
+    const boundNameToDisplay = binding.inputName
+        ? `${binding.inputName}${
+              binding.inputName.startsWith('axe') ? (binding.direction > 0 ? '+' : '-') : ''
+          }`
+        : 'N/A';
 
     return html`
         <div

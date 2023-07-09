@@ -19,22 +19,23 @@
         "./packages/*"
     ],
     "scripts": {
+        "build": "npm run --workspace @electrovir/forward-game-frontend build",
         "format": "virmator format",
         "preview": "npm run --workspace @electrovir/forward-game-frontend preview",
-        "regenerate-deps": "rm -rf node_modules && rm -f package-lock.json && npm i",
+        "regenerate-deps": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -f package-lock.json && npm i",
         "start": "npm run --workspace @electrovir/forward-game-frontend start",
         "test": "mono-vir for-each-async npm test",
-        "test:all": "concurrently --colors --kill-others-on-fail -c auto --names types,tests,spelling,format,docs \"npm run test:types\" \"npm run test\" \"npm run test:spelling\" \"npm run test:format\"",
+        "test:all": "concurrently --colors --kill-others-on-fail -c auto --names types,tests,spelling,format,docs, build \"npm run test:types\" \"npm run test\" \"npm run test:spelling\" \"npm run test:format\" \"npm run build\"",
         "test:format": "virmator format check",
         "test:spelling": "virmator spellcheck",
-        "test:types": "mono-vir for-each-async npm run test:types"
+        "test:types": "mono-vir for-each-async tsc --noEmit"
     },
     "devDependencies": {
         "concurrently": "^8.2.0",
         "cspell": "^6.31.1",
         "esbuild": "^0.18.11",
         "mono-vir": "^0.1.4",
-        "npm-check-updates": "^16.10.13",
+        "npm-check-updates": "^16.10.15",
         "prettier": "^2.8.8",
         "prettier-plugin-interpolated-html-tags": "^0.0.4",
         "prettier-plugin-jsdoc": "^0.4.2",
@@ -44,7 +45,7 @@
         "prettier-plugin-sort-json": "^1.0.0",
         "prettier-plugin-toml": "^0.3.1",
         "typescript": "^5.1.6",
-        "virmator": "6.6.6"
+        "virmator": "7.0.3"
     },
     "overrides": {
         "semver": "^7.5.3"

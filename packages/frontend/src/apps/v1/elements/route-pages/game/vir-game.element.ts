@@ -1,6 +1,11 @@
-import {typedHasProperty} from '@augment-vir/common';
-import {css, defineElement, defineElementEvent, html, listen} from 'element-vir';
-import {InputDeviceHandler, InputDeviceHandlerEventTypeEnum} from 'input-device-handler';
+import {areJsonEqual, typedHasProperty} from '@augment-vir/common';
+import {css, defineElement, defineElementEvent, html, listen, renderIf} from 'element-vir';
+import {
+    CurrentInputsChangedEvent,
+    InputDeviceEventTypeEnum,
+    InputDeviceHandler,
+} from 'input-device-handler';
+import {round} from '../../../augments/number';
 import {BasicInputDevice} from '../../../data/basic-input-device';
 import {GameLoopHandler} from '../../../data/game-loop';
 import {ReadInputsOutput, readInputs} from '../../../data/read-inputs';
@@ -109,103 +114,113 @@ export const VirGame = defineElement<GameInputs>()({
         }
     `,
     stateInitStatic: {
-        currentControls: {} as ReadInputsOutput,
         currentPosition: {
             x: 0,
             y: 0,
         } as GamePosition,
         paused: false,
-        gameLoop: new GameLoopHandler(),
-        timestamp: 0,
+        cleanup: undefined as undefined | (() => void),
         win: false,
     },
     events: {
         exit: defineElementEvent<void>(),
     },
-    initCallback: ({inputs, state, updateState, dispatch}) => {
-        state.gameLoop.addLoopCallback((_, timestamp) => {
-            updateState({timestamp});
+    initCallback: ({inputs, state, host, updateState, dispatch}) => {
+        function readBindings() {
+            const currentBindings =
+                inputs.gameSettings.bindings[inputs.selectedDevice.deviceName]?.bindings;
+
+            if (!currentBindings) {
+                const error = new Error(
+                    `current bindings for "${inputs.selectedDevice.deviceName}" not found.`,
+                );
+                dispatch(new BreakingErrorEvent(error));
+                throw error;
+            }
+
+            return currentBindings;
+        }
+
+        const gameLoop = new GameLoopHandler();
+
+        gameLoop.addLoopCallback(() => {
+            const allDevices = inputs.inputHandler.updateInputDevices();
+
+            const isWithinWinCondition = checkWinCondition(host);
+            if (isWithinWinCondition) {
+                updateState({win: true});
+            }
+
+            const currentControls = readInputs(
+                Object.values(allDevices[inputs.selectedDevice.deviceKey].currentInputs),
+                readBindings(),
+            );
+
+            if (state.paused || state.win) {
+                return;
+            }
+            const newPosition = getNewPosition(currentControls, state.currentPosition);
+
+            if (!areJsonEqual(newPosition, state.currentPosition)) {
+                updateState({currentPosition: newPosition});
+            }
         });
 
-        inputs.inputHandler.addEventListener(
-            InputDeviceHandlerEventTypeEnum.CurrentInputsChanged,
-            (event) => {
-                const currentInputs = event.detail.data.allCurrentInputs;
-                const newInputs = event.detail.data.newInputs;
+        function listener(event: CurrentInputsChangedEvent) {
+            const newInputs = event.detail.inputs.newInputs.filter(
+                (input) => input.deviceKey === inputs.selectedDevice.deviceKey,
+            );
 
-                const currentBindings =
-                    inputs.gameSettings.bindings[inputs.selectedDevice.deviceName]?.bindings;
+            const newControls = readInputs(newInputs, readBindings());
 
-                if (!currentBindings) {
-                    dispatch(
-                        new BreakingErrorEvent(
-                            new Error(
-                                `current bindings for "${inputs.selectedDevice.deviceName}" not found.`,
-                            ),
-                        ),
-                    );
-                    return;
-                }
-
-                const currentControls = readInputs(
-                    inputs.selectedDevice.deviceKey,
-                    currentInputs,
-                    currentBindings,
-                );
-
-                const newControls = readInputs(
-                    inputs.selectedDevice.deviceKey,
-                    newInputs,
-                    currentBindings,
-                );
-
-                const paused = newControls.hasOwnProperty(AvailableControls.Pause)
-                    ? !state.paused
-                    : state.paused;
-
-                updateState({
-                    currentControls,
-                    paused,
-                });
-            },
-        );
-    },
-    renderCallback: ({state, updateState, inputs, dispatch, events, host}) => {
-        const newPosition = getNewPosition(state.currentControls, state.currentPosition);
-
-        const isWithinWinCondition = checkWinCondition(host);
-        if (isWithinWinCondition) {
-            updateState({win: true});
+            if (newControls.hasOwnProperty(AvailableControls.Pause)) {
+                updateState({paused: !state.paused});
+            }
         }
 
+        inputs.inputHandler.addEventListener(
+            InputDeviceEventTypeEnum.CurrentInputsChanged,
+            listener,
+        );
+
+        updateState({
+            cleanup: () => {
+                inputs.inputHandler.removeEventListener(
+                    InputDeviceEventTypeEnum.CurrentInputsChanged,
+                    listener,
+                );
+                gameLoop.destroy();
+            },
+        });
+    },
+    cleanupCallback({state}) {
+        state.cleanup?.();
+    },
+    renderCallback: ({state, dispatch, events}) => {
+        console.log('render');
         const shouldPause = state.win || state.paused;
         const shipStyle = `top: ${state.currentPosition.y}px; left: ${state.currentPosition.x}px`;
-        const pauseStyle = shouldPause ? '' : 'display: none;';
-        const pauseText = state.win ? 'You Win!' : 'Paused';
-        const exitButtonStyle = state.win ? '' : 'display: none;';
-
-        if (!shouldPause) {
-            updateState({
-                currentPosition: newPosition,
-            });
-        }
 
         return html`
-            <div class="pause-screen" style=${pauseStyle}>
-                <div class="pause-background"></div>
-                <div class="pause-info">
-                    <span>${pauseText}</span>
-                    <button
-                        class="exit-button"
-                        style=${exitButtonStyle}
-                        ${listen('click', () => {
-                            dispatch(new events.exit());
-                        })}
-                    >
-                        Exit
-                    </button>
-                </div>
-            </div>
+            ${renderIf(
+                shouldPause,
+                html`
+                    <div class="pause-screen">
+                        <div class="pause-background"></div>
+                        <div class="pause-info">
+                            <span>${state.win ? 'You Win!' : 'Paused'}</span>
+                            <button
+                                class="exit-button"
+                                ${listen('click', () => {
+                                    dispatch(new events.exit());
+                                })}
+                            >
+                                Exit
+                            </button>
+                        </div>
+                    </div>
+                `,
+            )}
             <div class="victory-location">Get here to win!</div>
             <div class="ship-wrapper">
                 <div class="ship" style=${shipStyle}></div>
@@ -221,17 +236,29 @@ function getNewPosition(controls: ReadInputsOutput, currentPosition: GamePositio
     let horizontalMovement = 0;
 
     if (typedHasProperty(controls, AvailableControls.Down)) {
-        verticalMovement += Math.min(controls[AvailableControls.Down]!, 1) * fullMovement;
+        verticalMovement += round({
+            number: Math.min(controls[AvailableControls.Down]!, 1) * fullMovement,
+            digits: 1,
+        });
     }
     if (typedHasProperty(controls, AvailableControls.Up)) {
-        verticalMovement -= Math.min(controls[AvailableControls.Up]!, 1) * fullMovement;
+        verticalMovement -= round({
+            number: Math.min(controls[AvailableControls.Up]!, 1) * fullMovement,
+            digits: 1,
+        });
     }
 
     if (typedHasProperty(controls, AvailableControls.Right)) {
-        horizontalMovement += Math.min(controls[AvailableControls.Right]!, 1) * fullMovement;
+        horizontalMovement += round({
+            number: Math.min(controls[AvailableControls.Right]!, 1) * fullMovement,
+            digits: 1,
+        });
     }
     if (typedHasProperty(controls, AvailableControls.Left)) {
-        horizontalMovement -= Math.min(controls[AvailableControls.Left]!, 1) * fullMovement;
+        horizontalMovement -= round({
+            number: Math.min(controls[AvailableControls.Left]!, 1) * fullMovement,
+            digits: 1,
+        });
     }
 
     if (horizontalMovement && verticalMovement) {

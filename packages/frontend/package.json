@@ -6,15 +6,14 @@
         "build": "virmator frontend build",
         "compile": "virmator compile",
         "preview": "virmator frontend preview",
-        "start": "npm install && virmator frontend",
-        "test": "virmator test-web",
-        "test:types": "tsc --noEmit"
+        "start": "virmator frontend",
+        "test": "virmator test-web"
     },
     "dependencies": {
         "@augment-vir/browser": "^15.3.0",
         "@augment-vir/common": "^15.3.0",
         "element-vir": "14.0.3",
-        "input-device-handler": "1.1.2",
+        "input-device-handler": "2.0.3",
         "spa-router-vir": "2.1.1",
         "vira": "^0.6.0"
     },
@@ -30,7 +29,7 @@
         "esbuild": "^0.18.11",
         "istanbul-smart-text-reporter": "^1.1.2",
         "typescript": "^5.1.6",
-        "vite": "^4.3.9",
+        "vite": "^4.4.2",
         "vite-tsconfig-paths": "^4.2.0"
     }
 }

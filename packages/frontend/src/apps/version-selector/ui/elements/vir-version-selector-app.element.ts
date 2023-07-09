@@ -85,9 +85,9 @@ export const VirVersionSelector = defineElementNoInputs({
                               ></${resolved}>
                           `;
                       },
-                      () => {
+                      (error) => {
                           return html`
-                              Failed.
+                              Failed: ${error.message}
                           `;
                       },
                   );
