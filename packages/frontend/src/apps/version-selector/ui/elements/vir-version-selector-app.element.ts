@@ -28,6 +28,31 @@ export const VirVersionSelector = defineElementNoInputs({
             display: block;
             height: 100%;
         }
+
+        .loading {
+            opacity: 0;
+            animation-name: pulse;
+            animation-delay: 1s;
+            animation-duration: 1s;
+            animation-iteration-count: 1;
+            animation-fill-mode: forwards;
+            animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+            height: 100%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 5em;
+        }
+
+        @keyframes pulse {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
     `,
     stateInitStatic: {
         router: getGameRouter(),
@@ -71,7 +96,9 @@ export const VirVersionSelector = defineElementNoInputs({
                   `
                 : renderAsync(
                       state.currentGameVersionElement,
-                      'Loading',
+                      html`
+                          <div class="loading">Loading...</div>
+                      `,
                       (resolved) => {
                           if (!resolved) {
                               return 'Failed';
