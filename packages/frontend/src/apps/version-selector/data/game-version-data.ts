@@ -22,4 +22,11 @@ export const gameVersionData = {
                 .VirForwardGameApp;
         },
     },
+    [gameVersionNames.v2]: {
+        description: 'Local multiplayer support.',
+        async loadVersionElement() {
+            return (await import('../../v2/elements/vir-forward-game-app.element'))
+                .VirForwardGameApp;
+        },
+    },
 } as const satisfies AllGameVersionData;
