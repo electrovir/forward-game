@@ -5,7 +5,7 @@ import {
     InputDeviceEventTypeEnum,
     InputDeviceHandler,
 } from 'input-device-handler';
-import {round} from '../../../../v1/augments/number';
+import {round} from '../../../../../util/number';
 import {BasicInputDevice} from '../../../data/basic-input-device';
 import {GameLoopHandler} from '../../../data/game-loop';
 import {ReadInputsOutput, readInputs} from '../../../data/read-inputs';
