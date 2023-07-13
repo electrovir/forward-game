@@ -19,14 +19,14 @@ export const gameVersionData = {
         description: 'Controller support.',
         async loadVersionElement() {
             return (await import('../../v1/elements/vir-forward-game-app.element'))
-                .VirForwardGameApp;
+                .VirForwardGameAppV1;
         },
     },
     [gameVersionNames.v2]: {
         description: 'Local multiplayer support.',
         async loadVersionElement() {
             return (await import('../../v2/elements/vir-forward-game-app.element'))
-                .VirForwardGameApp;
+                .VirForwardGameAppV2;
         },
     },
 } as const satisfies AllGameVersionData;

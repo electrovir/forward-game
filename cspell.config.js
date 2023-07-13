@@ -5,6 +5,7 @@ module.exports = {
     ignorePaths: [
         ...baseConfig.ignorePaths,
         '*.drawio',
+        '**/configs/config-output-*',
     ],
     words: [
         ...baseConfig.words,

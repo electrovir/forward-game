@@ -3,17 +3,17 @@ import {InputDeviceHandler} from 'input-device-handler';
 import {gameVersionNames} from '../../../data/versions';
 import {ChangeRouteEvent, GameFullRoute} from '../../../router/game-router';
 import {BasicInputDevice} from '../data/basic-input-device';
-import {V1RoutesEnum, doesRouteNeedSanitization, sanitizeV1Route} from '../data/routing/v1-routes';
+import {V2RoutesEnum, doesRouteNeedSanitization, sanitizeV2Route} from '../data/routing/v2-routes';
 import {getGameSettings, saveGameSettings} from '../data/settings/game-settings';
 import {BreakingErrorEvent} from './global-events/breaking-error.event';
 import {UpdateGameSettingsEvent} from './global-events/update-game-settings.event';
-import {VirAssignControls} from './route-pages/assign-controls/vir-assign-controls.element';
-import {VirGame} from './route-pages/game/vir-game.element';
+import {VirAssignControlsV2} from './route-pages/assign-controls/vir-assign-controls.element';
+import {VirGameV2} from './route-pages/game/vir-game.element';
 
 const initialGameSettings = getGameSettings();
 
-export const VirForwardGameApp = defineElement<{currentRoute: GameFullRoute}>()({
-    tagName: 'vir-forward-game-app',
+export const VirForwardGameAppV2 = defineElement<{currentRoute: GameFullRoute}>()({
+    tagName: 'vir-forward-game-app-v2',
     stateInitStatic: {
         inputHandler: new InputDeviceHandler({
             gamepadDeadZoneSettings: initialGameSettings.gamepadSettings.deadZones,
@@ -36,12 +36,12 @@ export const VirForwardGameApp = defineElement<{currentRoute: GameFullRoute}>()(
         }
     `,
     renderCallback({state, updateState, inputs, dispatch}) {
-        if (inputs.currentRoute.paths[0] !== gameVersionNames.v1) {
+        if (inputs.currentRoute.paths[0] !== gameVersionNames.v2) {
             return '';
         } else if (doesRouteNeedSanitization(inputs.currentRoute)) {
             dispatch(
                 new ChangeRouteEvent({
-                    route: sanitizeV1Route(inputs.currentRoute),
+                    route: sanitizeV2Route(inputs.currentRoute),
                     sanitized: true,
                 }),
             );
@@ -49,7 +49,7 @@ export const VirForwardGameApp = defineElement<{currentRoute: GameFullRoute}>()(
         }
 
         const showGame = !!(
-            inputs.currentRoute.paths[1] === V1RoutesEnum.Play && state.selectedDevice
+            inputs.currentRoute.paths[1] === V2RoutesEnum.Play && state.selectedDevice
         );
 
         if (showGame) {
@@ -72,54 +72,54 @@ export const VirForwardGameApp = defineElement<{currentRoute: GameFullRoute}>()(
             >
                 ${showGame
                     ? html`
-                          <${VirGame}
-                              ${assign(VirGame, {
+                          <${VirGameV2}
+                              ${assign(VirGameV2, {
                                   gameSettings: state.gameSettings,
                                   inputHandler: state.inputHandler,
                                   selectedDevice: state.selectedDevice,
                               })}
-                              ${listen(VirGame.events.exit, () => {
+                              ${listen(VirGameV2.events.exit, () => {
                                   dispatch(
                                       new ChangeRouteEvent({
                                           route: {
                                               paths: [
-                                                  gameVersionNames.v1,
-                                                  V1RoutesEnum.AssignControls,
+                                                  gameVersionNames.v2,
+                                                  V2RoutesEnum.AssignControls,
                                               ],
                                           },
                                           sanitized: false,
                                       }),
                                   );
                               })}
-                          ></${VirGame}>
+                          ></${VirGameV2}>
                       `
                     : html`
-                          <${VirAssignControls}
-                              ${assign(VirAssignControls, {
+                          <${VirAssignControlsV2}
+                              ${assign(VirAssignControlsV2, {
                                   inputHandler: state.inputHandler,
                                   gameSettings: state.gameSettings,
                                   selectedDevice: state.selectedDevice,
                               })}
-                              ${listen(VirAssignControls.events.assignmentDone, () => {
+                              ${listen(VirAssignControlsV2.events.assignmentDone, () => {
                                   dispatch(
                                       new ChangeRouteEvent({
                                           route: {
                                               paths: [
-                                                  gameVersionNames.v1,
-                                                  V1RoutesEnum.Play,
+                                                  gameVersionNames.v2,
+                                                  V2RoutesEnum.Play,
                                               ],
                                           },
                                           sanitized: false,
                                       }),
                                   );
                               })}
-                              ${listen(VirAssignControls.events.changeDevice, (event) => {
+                              ${listen(VirAssignControlsV2.events.changeDevice, (event) => {
                                   const selectedDevice = event.detail;
                                   updateState({
                                       selectedDevice: selectedDevice,
                                   });
                               })}
-                          ></${VirAssignControls}>
+                          ></${VirAssignControlsV2}>
                       `}
             </main>
         `;

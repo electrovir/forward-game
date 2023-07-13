@@ -24,8 +24,8 @@ type GamePosition = {
     y: number;
 };
 
-export const VirGame = defineElement<GameInputs>()({
-    tagName: 'vir-game',
+export const VirGameV1 = defineElement<GameInputs>()({
+    tagName: 'vir-game-v1',
     styles: css`
         :host {
             height: 100%;

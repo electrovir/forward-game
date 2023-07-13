@@ -59,8 +59,8 @@ function toBasicInputDevices(devices: InputDevice[]): AllBasicInputDevices {
     return basicDevices;
 }
 
-export const VirAssignControls = defineElement<AssignControlsInputs>()({
-    tagName: 'vir-assign-controls',
+export const VirAssignControlsV1 = defineElement<AssignControlsInputs>()({
+    tagName: 'vir-assign-controls-v1',
     events: {
         assignmentDone: defineElementEvent<void>(),
         changeDevice: defineElementEvent<BasicInputDevice>(),
