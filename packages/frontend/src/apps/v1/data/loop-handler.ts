@@ -1,4 +1,4 @@
-import {randomString} from '@augment-vir/browser';
+import {randomString} from '@augment-vir/common';
 
 type LoopCallback<CallbackInput> = (input: CallbackInput, timestamp: number) => void;
 

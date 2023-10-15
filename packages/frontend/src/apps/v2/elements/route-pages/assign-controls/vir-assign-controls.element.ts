@@ -1,5 +1,4 @@
-import {randomString} from '@augment-vir/browser';
-import {getObjectTypedValues, mapObjectValues} from '@augment-vir/common';
+import {getObjectTypedValues, mapObjectValues, randomString} from '@augment-vir/common';
 import {css, defineElement, defineElementEvent, html, listen} from 'element-vir';
 import {
     AnyInputDeviceKey,

@@ -76,12 +76,8 @@ export const VirVersionSelector = defineElementNoInputs({
         });
     },
     renderCallback({state, updateState}) {
-        updateState({
-            currentGameVersionElement: {
-                serializableTrigger: {
-                    rootPath: state.currentRoute.paths[0],
-                },
-            },
+        state.currentGameVersionElement.updateTrigger({
+            rootPath: state.currentRoute.paths[0],
         });
 
         const appTemplate =

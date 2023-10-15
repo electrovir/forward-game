@@ -1,4 +1,4 @@
-import {getEnumTypedKeys, isTruthy} from '@augment-vir/common';
+import {getObjectTypedKeys, isTruthy} from '@augment-vir/common';
 import {DeviceInputValue} from 'input-device-handler';
 import {AvailableControls, Binding, DeviceBindings} from './settings/input-binding-settings';
 
@@ -19,7 +19,7 @@ export function readInputs(
 ): ReadInputsOutput {
     const activeControls = currentInputs
         .map((currentInput): [AvailableControls, number][] | undefined => {
-            const assignedControls = getEnumTypedKeys(bindings).filter((control) => {
+            const assignedControls = getObjectTypedKeys(bindings).filter((control) => {
                 const binding = bindings[control];
 
                 return (
