@@ -31,21 +31,22 @@
         "test:types": "mono-vir for-each-async tsc --noEmit"
     },
     "devDependencies": {
-        "concurrently": "^8.2.0",
-        "cspell": "^6.31.1",
-        "esbuild": "^0.18.11",
-        "mono-vir": "^0.1.4",
-        "npm-check-updates": "^16.10.15",
+        "concurrently": "^8.2.1",
+        "cspell": "^7.3.8",
+        "dependency-cruiser": "^14.1.1",
+        "esbuild": "^0.19.4",
+        "mono-vir": "^0.1.6",
+        "npm-check-updates": "~16.12.3",
         "prettier": "^2.8.8",
         "prettier-plugin-interpolated-html-tags": "^0.0.4",
         "prettier-plugin-jsdoc": "^0.4.2",
         "prettier-plugin-multiline-arrays": "^2.0.0",
-        "prettier-plugin-organize-imports": "^3.2.2",
-        "prettier-plugin-packagejson": "^2.4.4",
+        "prettier-plugin-organize-imports": "^3.2.3",
+        "prettier-plugin-packagejson": "^2.4.6",
         "prettier-plugin-sort-json": "^1.0.0",
         "prettier-plugin-toml": "^0.3.1",
-        "typescript": "^5.1.6",
-        "virmator": "7.0.3"
+        "typescript": "^5.2.2",
+        "virmator": "9.1.1"
     },
     "overrides": {
         "semver": "^7.5.3"

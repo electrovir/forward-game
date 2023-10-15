@@ -10,26 +10,26 @@
         "test": "virmator test-web"
     },
     "dependencies": {
-        "@augment-vir/browser": "^15.3.0",
-        "@augment-vir/common": "^15.3.0",
-        "element-vir": "14.0.3",
+        "@augment-vir/browser": "^21.3.0",
+        "@augment-vir/common": "^21.3.0",
+        "element-vir": "16.5.0",
         "input-device-handler": "2.0.3",
-        "spa-router-vir": "2.1.1",
-        "vira": "^0.6.0"
+        "spa-router-vir": "3.0.2",
+        "vira": "^2.3.1"
     },
     "devDependencies": {
-        "@augment-vir/node-js": "^15.3.0",
+        "@augment-vir/node-js": "^21.3.0",
         "@open-wc/testing": "3.2.0",
-        "@types/mocha": "^10.0.1",
+        "@types/mocha": "^10.0.2",
         "@web/dev-server-esbuild": "^0.4.1",
-        "@web/test-runner": "^0.16.1",
-        "@web/test-runner-commands": "^0.7.0",
+        "@web/test-runner": "^0.17.2",
+        "@web/test-runner-commands": "^0.8.1",
         "@web/test-runner-playwright": "^0.10.1",
-        "@web/test-runner-visual-regression": "^0.8.0",
-        "esbuild": "^0.18.11",
+        "@web/test-runner-visual-regression": "^0.8.2",
+        "esbuild": "^0.19.4",
         "istanbul-smart-text-reporter": "^1.1.2",
-        "typescript": "^5.1.6",
-        "vite": "^4.4.2",
-        "vite-tsconfig-paths": "^4.2.0"
+        "typescript": "^5.2.2",
+        "vite": "^4.4.11",
+        "vite-tsconfig-paths": "^4.2.1"
     }
 }
