@@ -2,7 +2,7 @@ import {ArrayElement} from '@augment-vir/common';
 
 const gameVersions = [
     'v1',
-    'v2',
+    // 'v2',
 ] as const;
 
 export type GameVersionName = ArrayElement<typeof gameVersions>;

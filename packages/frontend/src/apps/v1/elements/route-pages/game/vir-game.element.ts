@@ -144,7 +144,8 @@ export const VirGameV1 = defineElement<GameInputs>()({
         const gameLoop = new GameLoopHandler();
 
         gameLoop.addLoopCallback(() => {
-            const allDevices = inputs.inputHandler.updateInputDevices();
+            const allDevices = inputs.inputHandler.readAllDevices();
+            console.log(allDevices);
 
             const isWithinWinCondition = checkWinCondition(host);
             if (isWithinWinCondition) {
@@ -152,7 +153,7 @@ export const VirGameV1 = defineElement<GameInputs>()({
             }
 
             const currentControls = readInputs(
-                Object.values(allDevices[inputs.selectedDevice.deviceKey].currentInputs),
+                Object.values(allDevices[inputs.selectedDevice.deviceKey]?.currentInputs ?? {}),
                 readBindings(),
             );
 

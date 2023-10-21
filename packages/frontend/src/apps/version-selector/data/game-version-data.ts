@@ -14,7 +14,7 @@ export type GameVersionData = {
 
 export type AllGameVersionData = Readonly<Record<GameVersionName, GameVersionData>>;
 
-export const gameVersionData = {
+export const gameVersionData: AllGameVersionData = {
     [gameVersionNames.v1]: {
         description: 'Controller support.',
         async loadVersionElement() {
@@ -22,11 +22,4 @@ export const gameVersionData = {
                 .VirForwardGameAppV1;
         },
     },
-    [gameVersionNames.v2]: {
-        description: 'Local multiplayer support.',
-        async loadVersionElement() {
-            return (await import('../../v2/elements/vir-forward-game-app.element'))
-                .VirForwardGameAppV2;
-        },
-    },
-} as const satisfies AllGameVersionData;
+};

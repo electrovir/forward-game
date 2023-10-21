@@ -1,4 +1,4 @@
-import {assign, css, defineElement, html, listen} from 'element-vir';
+import {css, defineElement, html, listen} from 'element-vir';
 import {ViraLink, noNativeFormStyles, noNativeSpacing, viraAnimationDurations} from 'vira';
 import {ChangeRouteEvent, GameFullRoute, GameRouter} from '../../../../router/game-router';
 import {AllGameVersionData} from '../../data/game-version-data';
@@ -56,15 +56,14 @@ export const VirSelectGameVersion = defineElement<{
                 versionData,
             ]) => {
                 return html`
-                    <${ViraLink}
-                        ${assign(ViraLink, {
+                    <${ViraLink.assign({
+                        route: {
                             route: {
-                                route: {
-                                    paths: [versionName],
-                                },
-                                router: inputs.router,
+                                paths: [versionName],
                             },
-                        })}
+                            router: inputs.router,
+                        },
+                    })}
                         ${listen(ViraLink.events.routeChange, (event) => {
                             dispatch(
                                 new ChangeRouteEvent({

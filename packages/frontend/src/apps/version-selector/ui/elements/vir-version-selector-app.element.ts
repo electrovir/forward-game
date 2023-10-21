@@ -1,13 +1,4 @@
-import {
-    DeclarativeElementDefinition,
-    assign,
-    asyncProp,
-    css,
-    defineElementNoInputs,
-    html,
-    listen,
-    renderAsync,
-} from 'element-vir';
+import {asyncProp, css, defineElementNoInputs, html, listen, renderAsync} from 'element-vir';
 import {isGameVersion} from '../../../../data/versions';
 import {
     ChangeRouteEvent,
@@ -58,11 +49,7 @@ export const VirVersionSelector = defineElementNoInputs({
         router: getGameRouter(),
         currentRoute: defaultGameRoute,
         currentGameVersionElement: asyncProp({
-            async updateCallback({
-                rootPath,
-            }: {
-                rootPath: GameRoutePath[0];
-            }): Promise<DeclarativeElementDefinition | undefined> {
+            async updateCallback({rootPath}: {rootPath: GameRoutePath[0]}) {
                 if (!isGameVersion(rootPath)) {
                     return undefined;
                 }
@@ -75,7 +62,7 @@ export const VirVersionSelector = defineElementNoInputs({
             updateState({currentRoute: newRoute});
         });
     },
-    renderCallback({state, updateState}) {
+    renderCallback({state}) {
         state.currentGameVersionElement.updateTrigger({
             rootPath: state.currentRoute.paths[0],
         });
@@ -83,12 +70,10 @@ export const VirVersionSelector = defineElementNoInputs({
         const appTemplate =
             state.currentRoute.paths[0] === versionSelectorPath
                 ? html`
-                      <${VirSelectGameVersion}
-                          ${assign(VirSelectGameVersion, {
-                              versionData: gameVersionData,
-                              router: state.router,
-                          })}
-                      ></${VirSelectGameVersion}>
+                      <${VirSelectGameVersion.assign({
+                          versionData: gameVersionData,
+                          router: state.router,
+                      })}></${VirSelectGameVersion}>
                   `
                 : renderAsync(
                       state.currentGameVersionElement,
@@ -101,11 +86,9 @@ export const VirVersionSelector = defineElementNoInputs({
                           }
 
                           return html`
-                              <${resolved}
-                                  ${assign({
-                                      currentRoute: state.currentRoute,
-                                  })}
-                              ></${resolved}>
+                              <${resolved.assign({
+                                  currentRoute: state.currentRoute,
+                              })}></${resolved}>
                           `;
                       },
                       (error) => {
