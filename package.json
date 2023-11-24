@@ -49,7 +49,7 @@
         "prettier-plugin-sort-json": "^3.1.0",
         "prettier-plugin-toml": "^1.0.0",
         "typescript": "5.2.2",
-        "virmator": "11.1.3"
+        "virmator": "11.1.4"
     },
     "overrides": {
         "semver": "^7.5.3"
