@@ -21,10 +21,10 @@ const glowColors: string[] = shuffleArray([
 
 const animationDuration = {milliseconds: 700};
 
-export const VirGlowAnimation = defineElement<{
+export const VirGlowAnimationV1 = defineElement<{
     animation: undefined | Readonly<Animation>;
 }>()({
-    tagName: 'vir-glow-animation',
+    tagName: 'vir-glow-animation-v1',
     styles: css`
         :host {
             display: inline-flex;

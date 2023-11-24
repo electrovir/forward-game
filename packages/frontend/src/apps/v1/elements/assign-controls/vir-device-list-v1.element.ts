@@ -1,9 +1,11 @@
 import {css, defineElement, html} from 'element-vir';
 import {InputDeviceHandler} from 'input-device-handler';
-import {isIgnoredDevice} from '../../../data/forward-game-devices';
-import {ForwardGameState} from '../../../game-pipeline/forward-game-pipeline';
-import {BasicInputDevice} from '../../../game-pipeline/game-modules/read-inputs.module';
-import {DeviceSizeEnum, VirDeviceDisplay} from './vir-device-display.element';
+import {isIgnoredDevice} from '../../data/v1-ignored-devices';
+import {
+    BasicInputDevice,
+    CurrentDevices,
+} from '../../game-pipeline/game-modules/read-inputs.module';
+import {DeviceSizeEnum, VirDeviceDisplayV1} from './vir-device-display-v1.element';
 
 export function sortDevices(
     devices: ReadonlyArray<Readonly<BasicInputDevice>>,
@@ -20,7 +22,7 @@ export function sortDevices(
 }
 
 export const VirDeviceListV1 = defineElement<{
-    devices: ForwardGameState['currentDevices'];
+    devices: CurrentDevices;
     showAnimations: boolean;
     inputHandler: Pick<InputDeviceHandler, 'addEventListener' | 'removeEventListener'>;
 }>()({
@@ -36,13 +38,13 @@ export const VirDeviceListV1 = defineElement<{
 
         const deviceDisplay = sortedDevices.map((device) => {
             return html`
-                <${VirDeviceDisplay.assign({
+                <${VirDeviceDisplayV1.assign({
                     animated: true,
                     deviceKey: device.deviceKey,
                     displayShortKey: false,
                     size: DeviceSizeEnum.Large,
                     inputHandler: inputs.inputHandler,
-                })}></${VirDeviceDisplay}>
+                })}></${VirDeviceDisplayV1}>
             `;
         });
 

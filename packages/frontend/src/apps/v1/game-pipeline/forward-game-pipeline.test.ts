@@ -9,12 +9,17 @@ describe('forwardGamePipeline', () => {
 
         testPipeline.update({
             stateUpdate: {
-                saveNextFrame: true,
-                // @ts-expect-error
-                actionBindings: {
-                    [deviceKey]: {
-                        'button-b': {
-                            [BindingDirectionEnum.Negative]: 'derp',
+                runTime: {
+                    saveNextFrame: true,
+                },
+                settings: {
+                    /** Cannot assign a string ('derp') here, it should be a string array. */
+                    // @ts-expect-error
+                    actionBindings: {
+                        [deviceKey]: {
+                            'button-b': {
+                                [BindingDirectionEnum.Negative]: 'derp',
+                            },
                         },
                     },
                 },

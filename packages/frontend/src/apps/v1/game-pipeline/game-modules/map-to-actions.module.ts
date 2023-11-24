@@ -27,13 +27,22 @@ export type DevicesToActionNameBindings = Partial<{
 export type InputAction = {
     actionName: string;
     direction: BindingDirectionEnum;
+    /**
+     * Value for the input. For buttons this will almost always be simply 1 or 0. For axis like
+     * triggers or joysticks, the values will vary from -1 to 1.
+     */
     value: number;
+    /** How many frames this action has been held for. */
     frameCount: number;
 };
 
-export type GameStateForMappingInputs = Pick<GameStateForReadingInputs, 'currentInputs'> & {
-    currentActions: ReadonlyArray<InputAction>;
-    actionBindings: Readonly<DevicesToActionNameBindings>;
+export type GameStateForMappingInputs = {
+    runTime: Pick<GameStateForReadingInputs['runTime'], 'currentInputs'> & {
+        currentActions: ReadonlyArray<InputAction>;
+    };
+    settings: {
+        actionBindings: Readonly<DevicesToActionNameBindings>;
+    };
 };
 
 export const mapToActionsModule: GameModule<GameStateForMappingInputs> = {
@@ -42,10 +51,12 @@ export const mapToActionsModule: GameModule<GameStateForMappingInputs> = {
         version: 1,
     },
     runModule({gameState}) {
-        const currentActions: ReadonlyArray<InputAction> = gameState.currentInputs.reduce(
+        const currentActions: ReadonlyArray<InputAction> = gameState.runTime.currentInputs.reduce(
             (accum, deviceInput) => {
                 const boundAction =
-                    gameState.actionBindings[deviceInput.deviceKey]?.[deviceInput.inputName];
+                    gameState.settings.actionBindings[deviceInput.deviceKey]?.[
+                        deviceInput.inputName
+                    ];
 
                 if (!boundAction) {
                     return accum;
@@ -67,7 +78,7 @@ export const mapToActionsModule: GameModule<GameStateForMappingInputs> = {
                     ...allBoundActionNames.map((newActionName): InputAction => {
                         const newActionDirection = determineDirection(deviceInput.inputValue);
 
-                        const currentMatchingAction = gameState.currentActions.find(
+                        const currentMatchingAction = gameState.runTime.currentActions.find(
                             (currentAction) =>
                                 currentAction.actionName === newActionName &&
                                 currentAction.direction === newActionDirection,
@@ -89,7 +100,9 @@ export const mapToActionsModule: GameModule<GameStateForMappingInputs> = {
 
         return {
             stateUpdate: {
-                currentActions,
+                runTime: {
+                    currentActions,
+                },
             },
         };
     },

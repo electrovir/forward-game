@@ -1,5 +1,5 @@
 import {isEnumValue, isLengthAtLeast} from '@augment-vir/common';
-import {ForwardGameRouteEnum, GameFullRoute} from '../../../../router/routes';
+import {ForwardGameRouteEnum, GameFullRoute} from '../../../router/routes';
 
 export enum V1RoutesEnum {
     AssignControls = 'assign-controls',

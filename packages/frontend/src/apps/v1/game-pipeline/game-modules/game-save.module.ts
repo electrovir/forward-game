@@ -1,98 +1,125 @@
-import {pickObjectKeys} from '@augment-vir/common';
+import {MaybePromise, pickObjectKeys} from '@augment-vir/common';
 import {GameModule} from 'game-vir';
 import localForage from 'localforage-esm';
 
-localForage.createInstance({
+const gameDb = localForage.createInstance({
     name: 'forward-game',
+    storeName: 'forward-game',
 });
 
 const savedGameStateKey = 'forward-game-v1-save';
 
-export const defaultSaveGameAccess = {
+export const defaultSaveAccess = {
     async loadState() {
-        return await localForage.getItem(savedGameStateKey);
+        return await gameDb.getItem(savedGameStateKey);
     },
     async saveState(gameState: any) {
-        localForage.setItem(savedGameStateKey, gameState);
+        gameDb.setItem(savedGameStateKey, gameState);
     },
 };
 
-export function createSaveGameModule(propertiesToSave: ReadonlyArray<PropertyKey>) {
-    const saveGameModule: GameModule<
-        {
-            saveInterval: {milliseconds: number};
-            initialLoadAttempted: boolean;
-            saveNextFrame: boolean;
-        },
-        {
-            lastTimeSaved: {milliseconds: number};
-            saveGameAccess: {
-                loadState(): Promise<any>;
-                saveState(state: any): Promise<any>;
-            };
-        }
-    > = {
-        moduleId: {
-            name: 'save game',
-            version: 1,
-        },
-        async runModule({gameState, executionContext}) {
-            const shouldSave =
-                executionContext.lastTimeSaved.milliseconds <
-                    Date.now() - gameState.saveInterval.milliseconds || gameState.saveNextFrame;
+type GameSaveModuleGameState = {
+    runTime: {
+        initialLoadAttempted: boolean;
+        saveNextFrame: boolean;
+        lastTimeSaved: {milliseconds: number};
+    };
+    settings: {
+        saveInterval: {milliseconds: number};
+    };
+};
 
-            if (!gameState.initialLoadAttempted) {
-                try {
-                    const loadedGameState: any = await executionContext.saveGameAccess.loadState();
+const gameStatePropertiesToStore: ReadonlyArray<PropertyKey> = ['settings'];
 
+/**
+ * Possible improvements:
+ *
+ * - After saving game state, load it again and verify that it was saved correctly
+ * - After loading game state, verify that it matches expected state types
+ * - Account for incorrect saved state (override it, wipe it, try to be really smart about it, etc.)
+ * - Update save state after a game version upgrade
+ * - Store backups of save states
+ */
+export const gameSaveModule: GameModule<
+    GameSaveModuleGameState,
+    {
+        saveAccess: {
+            loadState(): MaybePromise<any>;
+            saveState(state: any): MaybePromise<void>;
+        };
+    }
+> = {
+    moduleId: {
+        name: 'save game',
+        version: 1,
+    },
+    async runModule({gameState, executionContext}) {
+        const shouldSave =
+            gameState.runTime.lastTimeSaved.milliseconds <
+                Date.now() - gameState.settings.saveInterval.milliseconds ||
+            gameState.runTime.saveNextFrame;
+
+        if (!gameState.runTime.initialLoadAttempted) {
+            /** If initial load hasn't happened yet, do it now. */
+            try {
+                const loadedGameState: any = await executionContext.saveAccess.loadState();
+
+                if (loadedGameState) {
                     console.info('Loading initial state', loadedGameState);
-                    if (loadedGameState) {
-                        return {
-                            initialLoadAttempted: true,
-                            stateUpdate: {
-                                ...pickObjectKeys<any, any>(loadedGameState, propertiesToSave),
-                                initialLoadAttempted: true,
-                            },
-                        };
-                    } else {
-                        return {
-                            stateUpdate: {
-                                initialLoadAttempted: true,
-                            },
-                        };
-                    }
-                } catch (error) {
-                    console.error('Failed to load saved game state', error);
                     return {
                         stateUpdate: {
-                            initialLoadAttempted: true,
+                            runTime: {
+                                initialLoadAttempted: true,
+                            },
+                            ...pickObjectKeys<any, any>(
+                                loadedGameState,
+                                gameStatePropertiesToStore,
+                            ),
+                        },
+                    };
+                } else {
+                    console.info('No saved game state found.');
+                    return {
+                        stateUpdate: {
+                            runTime: {
+                                initialLoadAttempted: true,
+                            },
                         },
                     };
                 }
-            } else if (shouldSave) {
-                try {
-                    await executionContext.saveGameAccess.saveState(
-                        pickObjectKeys<any, any>(gameState, propertiesToSave),
-                    );
+            } catch (error) {
+                console.error('Failed to load saved game state', error);
+                return {
+                    stateUpdate: {
+                        runTime: {
+                            initialLoadAttempted: true,
+                        },
+                    },
+                };
+            }
+        } else if (shouldSave) {
+            /** If it's time to save, do that. */
+            try {
+                await executionContext.saveAccess.saveState(
+                    pickObjectKeys<any, any>(gameState, gameStatePropertiesToStore),
+                );
 
-                    return {
-                        executionContextChange: {
+                return {
+                    stateUpdate: {
+                        runTime: {
                             lastTimeSaved: {
                                 milliseconds: Date.now(),
                             },
-                        },
-                        stateUpdate: {
                             saveNextFrame: false,
                         },
-                    };
-                } catch (error) {
-                    console.error('Failed to save game state', error);
-                }
+                    },
+                };
+            } catch (error) {
+                console.error('Failed to save game state', error);
             }
+        }
 
-            return undefined;
-        },
-    };
-
-    return saveGameModule;
-}
+        /** Nothing to do. */
+        return undefined;
+    },
+};

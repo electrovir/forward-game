@@ -3,8 +3,8 @@ import {noNativeFormStyles, viraAnimationDurations} from 'vira';
 import {
     BindingDirectionEnum,
     DeviceKey,
-} from '../../../game-pipeline/game-modules/map-to-actions.module';
-import {DeviceSizeEnum, VirDeviceDisplay} from './vir-device-display.element';
+} from '../../game-pipeline/game-modules/map-to-actions.module';
+import {DeviceSizeEnum, VirDeviceDisplayV1} from './vir-device-display-v1.element';
 
 export const minBindingHeight = 52;
 
@@ -81,13 +81,13 @@ export const VirSingleBindingV1 = defineElement<{
                 })}
             >
                 <span class="device-icon">
-                    <${VirDeviceDisplay.assign({
+                    <${VirDeviceDisplayV1.assign({
                         animated: false,
                         deviceKey: inputs.binding?.deviceKey,
                         inputHandler: undefined,
                         displayShortKey: true,
                         size: DeviceSizeEnum.Inline,
-                    })}></${VirDeviceDisplay}>
+                    })}></${VirDeviceDisplayV1}>
                 </span>
                 ${displayName == undefined
                     ? ''

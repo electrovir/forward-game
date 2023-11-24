@@ -1,7 +1,7 @@
 import {getObjectTypedKeys, isTruthy} from '@augment-vir/common';
 import {classMap, css, defineElement, defineElementEvent, html, listen} from 'element-vir';
 import {viraAnimationDurations} from 'vira';
-import {DevicesToActionNameBindings} from '../../../game-pipeline/game-modules/map-to-actions.module';
+import {DevicesToActionNameBindings} from '../../game-pipeline/game-modules/map-to-actions.module';
 import {ActionBinding, VirSingleBindingV1, minBindingHeight} from './vir-single-binding-v1.element';
 
 export type ActionToBindings = {
@@ -118,8 +118,8 @@ export const VirBindingsTableV1 = defineElement<CurrentAssignments>()({
 
         const rows = inputs.requiredActionNames.map((actionName) => {
             const assignments = [
-                ...(actionMap[actionName] || []).filter(isTruthy),
                 undefined,
+                ...(actionMap[actionName] || []).filter(isTruthy),
             ].map(
                 (assignment) => html`
                     <${VirSingleBindingV1.assign({

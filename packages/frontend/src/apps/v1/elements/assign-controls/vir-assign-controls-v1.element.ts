@@ -6,12 +6,12 @@ import {
     TimedEvent,
 } from 'input-device-handler';
 import {ViraButton} from 'vira';
-import {isIgnoredDevice} from '../../../data/forward-game-devices';
-import {ForwardGamePipeline, ForwardGameState} from '../../../game-pipeline/forward-game-pipeline';
+import {isIgnoredDevice} from '../../data/v1-ignored-devices';
+import {ForwardGamePipeline, ForwardGameState} from '../../game-pipeline/forward-game-pipeline';
 import {
     DevicesToActionNameBindings,
     determineDirection,
-} from '../../../game-pipeline/game-modules/map-to-actions.module';
+} from '../../game-pipeline/game-modules/map-to-actions.module';
 import {VirBindingsTableV1} from './vir-bindings-table-v1.element';
 import {VirDeviceListV1} from './vir-device-list-v1.element';
 
@@ -32,13 +32,17 @@ export const VirAssignControlsV1 = defineElement<{
     >;
 }>()({
     tagName: 'vir-assign-controls-v1',
-    styles: css`
+    hostClasses: {
+        'vir-assign-controls-v1-listening-for-action': ({state}) => !!state.listeningForAction,
+    },
+    styles: ({hostClasses}) => css`
         :host {
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 32px;
             text-align: center;
+            position: relative;
         }
 
         .device-selector-wrapper {
@@ -139,6 +143,39 @@ export const VirAssignControlsV1 = defineElement<{
         ${VirBindingsTableV1} {
             margin-top: 16px;
             width: 100%;
+            max-width: 1000px;
+        }
+
+        .listening-for-action-name {
+            /* Set to display: flex in a host class. */
+            display: none;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999999;
+        }
+
+        .listening-for-action-name p {
+            display: flex;
+            border: 4px solid grey;
+            box-sizing: border-box;
+            padding: 64px;
+            max-width: 100%;
+            background-color: white;
+            border-radius: 16px;
+        }
+
+        ${hostClasses['vir-assign-controls-v1-listening-for-action']
+            .selector} > *:not(.listening-for-action-name) {
+            opacity: 0.2;
+        }
+        ${hostClasses['vir-assign-controls-v1-listening-for-action']
+            .selector} .listening-for-action-name {
+            display: flex;
         }
     `,
     events: {
@@ -146,7 +183,7 @@ export const VirAssignControlsV1 = defineElement<{
     },
     stateInitStatic: {
         listeningForAction: undefined as undefined | {actionName: string},
-        currentInputDevices: [] as ForwardGameState['currentDevices'],
+        currentInputDevices: [] as ForwardGameState['runTime']['currentDevices'],
         removeInputListeners: undefined as undefined | (() => void),
         currentBindings: {} as DevicesToActionNameBindings,
     },
@@ -165,9 +202,9 @@ export const VirAssignControlsV1 = defineElement<{
                     updateState({listeningForAction: undefined});
                     const inputDirection = determineDirection(newInput.inputValue);
                     const existingActionNames =
-                        inputs.gamePipeline.currentState.actionBindings[newInput.deviceKey]?.[
-                            newInput.inputName
-                        ]?.[inputDirection] ?? [];
+                        inputs.gamePipeline.currentState.settings.actionBindings[
+                            newInput.deviceKey
+                        ]?.[newInput.inputName]?.[inputDirection] ?? [];
 
                     if (existingActionNames.includes(actionNameToAssign)) {
                         return;
@@ -175,14 +212,18 @@ export const VirAssignControlsV1 = defineElement<{
 
                     inputs.gamePipeline.update({
                         stateUpdate: {
-                            saveNextFrame: true,
-                            actionBindings: {
-                                [newInput.deviceKey]: {
-                                    [newInput.inputName]: {
-                                        [inputDirection]: [
-                                            ...existingActionNames,
-                                            actionNameToAssign,
-                                        ],
+                            runTime: {
+                                saveNextFrame: true,
+                            },
+                            settings: {
+                                actionBindings: {
+                                    [newInput.deviceKey]: {
+                                        [newInput.inputName]: {
+                                            [inputDirection]: [
+                                                ...existingActionNames,
+                                                actionNameToAssign,
+                                            ],
+                                        },
                                     },
                                 },
                             },
@@ -202,14 +243,20 @@ export const VirAssignControlsV1 = defineElement<{
             );
             const removeDeviceStateListener = inputs.gamePipeline.addStateListener(
                 true,
-                ['currentDevices'],
+                [
+                    'runTime',
+                    'currentDevices',
+                ],
                 (newValue) => {
                     updateState({currentInputDevices: newValue});
                 },
             );
             const removeBindingsStateListener = inputs.gamePipeline.addStateListener(
                 true,
-                ['actionBindings'],
+                [
+                    'settings',
+                    'actionBindings',
+                ],
                 (newValue) => {
                     updateState({currentBindings: newValue});
                 },
@@ -228,7 +275,16 @@ export const VirAssignControlsV1 = defineElement<{
         }
     },
     renderCallback: ({state, updateState, inputs, events, dispatch}) => {
+        const showListeningForTemplate = state.listeningForAction
+            ? html`
+                  <div class="listening-for-action-name">
+                      <p>Press input for "${state.listeningForAction.actionName}"</p>
+                  </div>
+              `
+            : '';
+
         return html`
+            ${showListeningForTemplate}
             <header>
                 <h2>Configure Inputs</h2>
                 <p>To connect a controller, push buttons on it.</p>
@@ -248,23 +304,25 @@ export const VirAssignControlsV1 = defineElement<{
                 })}
                 ${listen(VirBindingsTableV1.events.removeBinding, (event) => {
                     const existingActionNames =
-                        inputs.gamePipeline.currentState.actionBindings[event.detail.deviceKey]?.[
-                            event.detail.inputName
-                        ]?.[event.detail.direction] ?? [];
+                        inputs.gamePipeline.currentState.settings.actionBindings[
+                            event.detail.deviceKey
+                        ]?.[event.detail.inputName]?.[event.detail.direction] ?? [];
 
-                    const newActionNames = existingActionNames.map((existingActionName) => {
-                        if (existingActionName !== event.detail.actionName) {
-                            return undefined;
-                        }
+                    const newActionNames = existingActionNames.filter((existingActionName) => {
+                        return existingActionName !== event.detail.actionName;
                     });
 
                     inputs.gamePipeline.update({
                         stateUpdate: {
-                            saveNextFrame: true,
-                            actionBindings: {
-                                [event.detail.deviceKey]: {
-                                    [event.detail.inputName]: {
-                                        [event.detail.direction]: newActionNames,
+                            runTime: {
+                                saveNextFrame: true,
+                            },
+                            settings: {
+                                actionBindings: {
+                                    [event.detail.deviceKey]: {
+                                        [event.detail.inputName]: {
+                                            [event.detail.direction]: newActionNames,
+                                        },
                                     },
                                 },
                             },

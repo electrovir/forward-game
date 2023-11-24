@@ -22,41 +22,51 @@ describe(mapToActionsModule.moduleId.name, () => {
             input: {
                 executionContext: {},
                 gameState: {
-                    actionBindings: exampleActionBindings,
-                    currentActions: [],
-                    currentInputs: [],
+                    runTime: {
+                        currentActions: [],
+                        currentInputs: [],
+                    },
+                    settings: {
+                        actionBindings: exampleActionBindings,
+                    },
                 },
                 millisecondsSinceLastFrame: 0,
             },
-            expect: {stateUpdate: {currentActions: []}},
+            expect: {stateUpdate: {runTime: {currentActions: []}}},
         },
         {
             it: 'performs a single action',
             input: {
                 executionContext: {},
                 gameState: {
-                    actionBindings: exampleActionBindings,
-                    currentActions: [],
-                    currentInputs: [
-                        {
-                            deviceKey: 'keyboard',
-                            inputName: 'button-w',
-                            inputValue: 1,
-                        },
-                    ],
+                    runTime: {
+                        currentActions: [],
+                        currentInputs: [
+                            {
+                                deviceKey: 'keyboard',
+                                inputName: 'button-w',
+                                inputValue: 1,
+                            },
+                        ],
+                    },
+                    settings: {
+                        actionBindings: exampleActionBindings,
+                    },
                 },
                 millisecondsSinceLastFrame: 0,
             },
             expect: {
                 stateUpdate: {
-                    currentActions: [
-                        {
-                            actionName: 'up',
-                            value: 1,
-                            direction: BindingDirectionEnum.Positive,
-                            frameCount: 1,
-                        },
-                    ],
+                    runTime: {
+                        currentActions: [
+                            {
+                                actionName: 'up',
+                                value: 1,
+                                direction: BindingDirectionEnum.Positive,
+                                frameCount: 1,
+                            },
+                        ],
+                    },
                 },
             },
         },
@@ -65,72 +75,78 @@ describe(mapToActionsModule.moduleId.name, () => {
             input: {
                 executionContext: {},
                 gameState: {
-                    actionBindings: exampleActionBindings,
-                    currentActions: [],
-                    currentInputs: [
-                        {
-                            deviceKey: 'keyboard',
-                            inputName: 'button-w',
-                            inputValue: 1,
-                        },
-                        {
-                            deviceKey: 'keyboard',
-                            inputName: 'button-s',
-                            inputValue: 1,
-                        },
-                        {
-                            deviceKey: 'keyboard',
-                            inputName: 'button-a',
-                            inputValue: 1,
-                        },
-                        {
-                            deviceKey: 'keyboard',
-                            inputName: 'button-d',
-                            inputValue: 1,
-                        },
-                        {
-                            deviceKey: 'keyboard',
-                            inputName: 'button- ',
-                            inputValue: 1,
-                        },
-                    ],
+                    runTime: {
+                        currentActions: [],
+                        currentInputs: [
+                            {
+                                deviceKey: 'keyboard',
+                                inputName: 'button-w',
+                                inputValue: 1,
+                            },
+                            {
+                                deviceKey: 'keyboard',
+                                inputName: 'button-s',
+                                inputValue: 1,
+                            },
+                            {
+                                deviceKey: 'keyboard',
+                                inputName: 'button-a',
+                                inputValue: 1,
+                            },
+                            {
+                                deviceKey: 'keyboard',
+                                inputName: 'button-d',
+                                inputValue: 1,
+                            },
+                            {
+                                deviceKey: 'keyboard',
+                                inputName: 'button- ',
+                                inputValue: 1,
+                            },
+                        ],
+                    },
+                    settings: {
+                        actionBindings: exampleActionBindings,
+                    },
                 },
                 millisecondsSinceLastFrame: 0,
             },
             expect: {
                 stateUpdate: {
-                    currentActions: [
-                        {
-                            actionName: 'up',
-                            value: 1,
-                            direction: BindingDirectionEnum.Positive,
-                            frameCount: 1,
-                        },
-                        {
-                            actionName: 'down',
-                            value: 1,
-                            direction: BindingDirectionEnum.Positive,
-                            frameCount: 1,
-                        },
-                        {
-                            actionName: 'left',
-                            value: 1,
-                            direction: BindingDirectionEnum.Positive,
-                            frameCount: 1,
-                        },
-                        {
-                            actionName: 'right',
-                            value: 1,
-                            direction: BindingDirectionEnum.Positive,
-                            frameCount: 1,
-                        },
-                        {
-                            actionName: 'pause',
-                            value: 1,
-                            direction: BindingDirectionEnum.Positive,
-                            frameCount: 1,
-                        },
-                    ],
+                    runTime: {
+                        currentActions: [
+                            {
+                                actionName: 'up',
+                                value: 1,
+                                direction: BindingDirectionEnum.Positive,
+                                frameCount: 1,
+                            },
+                            {
+                                actionName: 'down',
+                                value: 1,
+                                direction: BindingDirectionEnum.Positive,
+                                frameCount: 1,
+                            },
+                            {
+                                actionName: 'left',
+                                value: 1,
+                                direction: BindingDirectionEnum.Positive,
+                                frameCount: 1,
+                            },
+                            {
+                                actionName: 'right',
+                                value: 1,
+                                direction: BindingDirectionEnum.Positive,
+                                frameCount: 1,
+                            },
+                            {
+                                actionName: 'pause',
+                                value: 1,
+                                direction: BindingDirectionEnum.Positive,
+                                frameCount: 1,
+                            },
+                        ],
+                    },
                 },
             },
         },

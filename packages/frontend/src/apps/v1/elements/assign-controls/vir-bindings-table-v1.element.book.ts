@@ -1,7 +1,7 @@
 import {defineBookPage} from 'element-book';
 import {html} from 'element-vir';
 import {gamepadInputDeviceKey} from 'input-device-handler';
-import {BindingDirectionEnum} from '../../../game-pipeline/game-modules/map-to-actions.module';
+import {BindingDirectionEnum} from '../../game-pipeline/game-modules/map-to-actions.module';
 import {VirBindingsTableV1} from './vir-bindings-table-v1.element';
 
 export const actionBindingsV1Page = defineBookPage({

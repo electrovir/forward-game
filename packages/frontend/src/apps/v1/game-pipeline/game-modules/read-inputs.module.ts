@@ -31,16 +31,16 @@ export type DeviceInput = {
     inputValue: number;
 };
 
-export type GameStateForReadingInputs = {
-    currentDevices: ReadonlyArray<BasicInputDevice>;
-    currentInputs: ReadonlyArray<Readonly<DeviceInput>>;
-    deadZoneSettings: GamepadDeadZoneSettings;
-};
+export type CurrentDevices = ReadonlyArray<BasicInputDevice>;
 
-export const defaultGameStateForReadingInputs: GameStateForReadingInputs = {
-    currentDevices: [],
-    deadZoneSettings: {},
-    currentInputs: [],
+export type GameStateForReadingInputs = {
+    runTime: {
+        currentDevices: CurrentDevices;
+        currentInputs: ReadonlyArray<Readonly<DeviceInput>>;
+    };
+    settings: {
+        deadZoneSettings: GamepadDeadZoneSettings;
+    };
 };
 
 export const readInputsModule: GameModule<
@@ -55,7 +55,7 @@ export const readInputsModule: GameModule<
     },
     runModule({executionContext, gameState}) {
         const allDevices = getObjectTypedValues(
-            executionContext.inputHandler.readAllDevices(gameState.deadZoneSettings),
+            executionContext.inputHandler.readAllDevices(gameState.settings.deadZoneSettings),
         ).filter(isTruthy);
 
         const currentDevices = allDevices.map((currentDevice): BasicInputDevice => {
@@ -66,7 +66,7 @@ export const readInputsModule: GameModule<
             };
         });
 
-        const hasNewDevices = !areJsonEqual(gameState.currentDevices, currentDevices);
+        const hasNewDevices = !areJsonEqual(gameState.runTime.currentDevices, currentDevices);
 
         const currentInputs: ReadonlyArray<Readonly<DeviceInput>> = allDevices
             .map((device) =>
@@ -80,7 +80,7 @@ export const readInputsModule: GameModule<
             )
             .flat();
 
-        const hasNewInputs = !areJsonEqual(gameState.currentInputs, currentInputs);
+        const hasNewInputs = !areJsonEqual(gameState.runTime.currentInputs, currentInputs);
 
         if (!hasNewInputs && !hasNewDevices) {
             return undefined;
@@ -88,8 +88,10 @@ export const readInputsModule: GameModule<
 
         return {
             stateUpdate: {
-                ...(hasNewDevices ? {currentDevices} : {}),
-                ...(hasNewInputs ? {currentInputs} : {}),
+                runTime: {
+                    ...(hasNewDevices ? {currentDevices} : {}),
+                    ...(hasNewInputs ? {currentInputs} : {}),
+                },
             },
         };
     },

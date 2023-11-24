@@ -1,7 +1,17 @@
 import {itCases} from '@augment-vir/browser-testing';
 import {omitObjectKeys} from '@augment-vir/common';
 import {keyboardBaseDevice, mouseBaseDevice} from 'input-device-handler';
-import {defaultGameStateForReadingInputs, readInputsModule} from './read-inputs.module';
+import {GameStateForReadingInputs, readInputsModule} from './read-inputs.module';
+
+const defaultGameStateForReadingInputs: GameStateForReadingInputs = {
+    runTime: {
+        currentDevices: [],
+        currentInputs: [],
+    },
+    settings: {
+        deadZoneSettings: {},
+    },
+};
 
 describe(readInputsModule.moduleId.name, () => {
     itCases(readInputsModule.runModule, [
@@ -48,10 +58,12 @@ describe(readInputsModule.moduleId.name, () => {
             },
             expect: {
                 stateUpdate: {
-                    currentDevices: [
-                        omitObjectKeys(keyboardBaseDevice, ['deviceDetails']),
-                        omitObjectKeys(mouseBaseDevice, ['deviceDetails']),
-                    ],
+                    runTime: {
+                        currentDevices: [
+                            omitObjectKeys(keyboardBaseDevice, ['deviceDetails']),
+                            omitObjectKeys(mouseBaseDevice, ['deviceDetails']),
+                        ],
+                    },
                 },
             },
         },
@@ -93,22 +105,24 @@ describe(readInputsModule.moduleId.name, () => {
             },
             expect: {
                 stateUpdate: {
-                    currentDevices: [
-                        omitObjectKeys(keyboardBaseDevice, ['deviceDetails']),
-                        omitObjectKeys(mouseBaseDevice, ['deviceDetails']),
-                    ],
-                    currentInputs: [
-                        {
-                            deviceKey: 'keyboard',
-                            inputName: 'button-a',
-                            inputValue: 1,
-                        },
-                        {
-                            deviceKey: 'mouse',
-                            inputName: 'button-1',
-                            inputValue: 1,
-                        },
-                    ],
+                    runTime: {
+                        currentDevices: [
+                            omitObjectKeys(keyboardBaseDevice, ['deviceDetails']),
+                            omitObjectKeys(mouseBaseDevice, ['deviceDetails']),
+                        ],
+                        currentInputs: [
+                            {
+                                deviceKey: 'keyboard',
+                                inputName: 'button-a',
+                                inputValue: 1,
+                            },
+                            {
+                                deviceKey: 'mouse',
+                                inputName: 'button-1',
+                                inputValue: 1,
+                            },
+                        ],
+                    },
                 },
             },
         },

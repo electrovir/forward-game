@@ -8,8 +8,8 @@ import {
     TimedEvent,
     deviceKeyToDeviceType,
 } from 'input-device-handler';
-import {DeviceKey} from '../../../game-pipeline/game-modules/map-to-actions.module';
-import {Animation, VirGlowAnimation} from './vir-glow-animation.element';
+import {DeviceKey} from '../../game-pipeline/game-modules/map-to-actions.module';
+import {Animation, VirGlowAnimationV1} from './vir-glow-animation-v1.element';
 
 export enum DeviceSizeEnum {
     Large = 'large',
@@ -33,17 +33,17 @@ const shortKeys: Partial<Record<InputDeviceTypeEnum | string, string>> = {
     'Add Device': 'add',
 } satisfies Partial<Record<keyof typeof deviceEmojis, string>>;
 
-export const VirDeviceDisplay = defineElement<{
+export const VirDeviceDisplayV1 = defineElement<{
     deviceKey: DeviceKey | undefined;
     animated: boolean;
     size: DeviceSizeEnum;
     displayShortKey: boolean;
     inputHandler: Pick<InputDeviceHandler, 'addEventListener' | 'removeEventListener'> | undefined;
 }>()({
-    tagName: 'vir-device-display',
+    tagName: 'vir-device-display-v1',
     hostClasses: {
-        'vir-device-display-large': ({inputs}) => inputs.size === DeviceSizeEnum.Large,
-        'vir-device-display-inline': ({inputs}) => inputs.size === DeviceSizeEnum.Inline,
+        'vir-device-display-v1-large': ({inputs}) => inputs.size === DeviceSizeEnum.Large,
+        'vir-device-display-v1-inline': ({inputs}) => inputs.size === DeviceSizeEnum.Inline,
     },
     styles: ({hostClasses}) => css`
         :host {
@@ -52,7 +52,7 @@ export const VirDeviceDisplay = defineElement<{
             align-items: center;
         }
 
-        ${hostClasses['vir-device-display-large'].selector} .device-icon {
+        ${hostClasses['vir-device-display-v1-large'].selector} .device-icon {
             font-size: 3em;
         }
     `,
@@ -109,9 +109,9 @@ export const VirDeviceDisplay = defineElement<{
             (inputs.displayShortKey && shortKeys[emojiKey]) || (inputs.deviceKey ?? emojiKey);
 
         return html`
-            <${VirGlowAnimation.assign({animation: state.animation})}>
+            <${VirGlowAnimationV1.assign({animation: state.animation})}>
                 <span title=${emojiKey} class="device-icon">${deviceEmojis[emojiKey]}</span>
-            </${VirGlowAnimation}>
+            </${VirGlowAnimationV1}>
             <span>${displayKey}</span>
         `;
     },

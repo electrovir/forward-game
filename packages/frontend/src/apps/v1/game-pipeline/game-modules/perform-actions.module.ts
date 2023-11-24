@@ -1,7 +1,7 @@
 import {clamp, isEnumValue, isTruthy, mergeDeep, round} from '@augment-vir/common';
 import {GameModule} from 'game-vir';
 import {PartialDeep} from 'type-fest';
-import {GameStateForMappingInputs} from './map-to-actions.module';
+import {BindingDirectionEnum, GameStateForMappingInputs} from './map-to-actions.module';
 
 export enum GameAction {
     Up = 'up',
@@ -12,12 +12,14 @@ export enum GameAction {
 }
 
 export type GameStateForActions = GameStateForMappingInputs & {
-    playerPosition: {
-        x: number;
-        y: number;
+    runTime: {
+        playerPosition: {
+            x: number;
+            y: number;
+        };
+        isPaused: boolean;
+        haveWon: boolean;
     };
-    isPaused: boolean;
-    haveWon: boolean;
 };
 
 export const performActionsModule: GameModule<GameStateForActions> = {
@@ -38,13 +40,45 @@ export const performActionsModule: GameModule<GameStateForActions> = {
     },
 };
 
+export const defaultBindings = {
+    keyboard: {
+        'button-w': {
+            [BindingDirectionEnum.Positive]: [GameAction.Up],
+        },
+        'button-s': {
+            [BindingDirectionEnum.Positive]: [GameAction.Down],
+        },
+        'button-a': {
+            [BindingDirectionEnum.Positive]: [GameAction.Left],
+        },
+        'button-d': {
+            [BindingDirectionEnum.Positive]: [GameAction.Right],
+        },
+        'button-Escape': {
+            [BindingDirectionEnum.Positive]: [GameAction.Pause],
+        },
+        'button-ArrowUp': {
+            [BindingDirectionEnum.Positive]: [GameAction.Up],
+        },
+        'button-ArrowDown': {
+            [BindingDirectionEnum.Positive]: [GameAction.Down],
+        },
+        'button-ArrowLeft': {
+            [BindingDirectionEnum.Positive]: [GameAction.Left],
+        },
+        'button-ArrowRight': {
+            [BindingDirectionEnum.Positive]: [GameAction.Right],
+        },
+    },
+};
+
 const movementPerMillisecond = 0.24;
 
 function calculateNewState(
     gameState: GameStateForActions,
     millisecondsSinceLastFrame: number,
 ): PartialDeep<GameStateForActions> | undefined {
-    if (gameState.haveWon) {
+    if (gameState.runTime.haveWon) {
         return undefined;
     }
 
@@ -54,7 +88,7 @@ function calculateNewState(
     let horizontalMovement = 0;
     let pauseChange: boolean | undefined = undefined;
 
-    gameState.currentActions.forEach((currentAction) => {
+    gameState.runTime.currentActions.forEach((currentAction) => {
         if (!isEnumValue(currentAction.actionName, GameAction)) {
             return;
         } else if (currentAction.actionName === GameAction.Down) {
@@ -81,7 +115,7 @@ function calculateNewState(
             currentAction.actionName === GameAction.Pause &&
             currentAction.frameCount === 1
         ) {
-            pauseChange = !gameState.isPaused;
+            pauseChange = !gameState.runTime.isPaused;
         }
     });
 
@@ -105,17 +139,19 @@ function calculateNewState(
     const hasMovement = horizontalMovement || verticalMovement;
 
     const updates: ReadonlyArray<PartialDeep<GameStateForActions>> = [
-        !gameState.isPaused &&
+        !gameState.runTime.isPaused &&
             hasMovement && {
-                playerPosition: {
-                    x: round({
-                        number: gameState.playerPosition.x + horizontalMovement,
-                        digits: 2,
-                    }),
-                    y: round({
-                        number: gameState.playerPosition.y + verticalMovement,
-                        digits: 2,
-                    }),
+                runTime: {
+                    playerPosition: {
+                        x: round({
+                            number: gameState.runTime.playerPosition.x + horizontalMovement,
+                            digits: 2,
+                        }),
+                        y: round({
+                            number: gameState.runTime.playerPosition.y + verticalMovement,
+                            digits: 2,
+                        }),
+                    },
                 },
             },
         pauseChange !== undefined && {isPaused: pauseChange},

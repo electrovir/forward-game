@@ -2,16 +2,16 @@ import {getEnumTypedValues} from '@augment-vir/common';
 import {css, defineElement, html, listen, renderIf} from 'element-vir';
 import {ChangeRouteEvent} from '../../../router/game-router';
 import {GameFullRoute, gameVersions} from '../../../router/routes';
-import {V1RoutesEnum, doesRouteNeedSanitization, sanitizeV1Route} from '../data/routing/v1-routes';
+import {V1RoutesEnum, doesRouteNeedSanitization, sanitizeV1Route} from '../data/v1-routes';
 import {
     ForwardGamePipeline,
     createForwardGamePipeline,
+    startNewRunGameState,
 } from '../game-pipeline/forward-game-pipeline';
 import {GameAction} from '../game-pipeline/game-modules/perform-actions.module';
-import {BreakingErrorEvent} from './global-events/breaking-error.event';
-import {VirAssignControlsV1} from './route-pages/assign-controls/vir-assign-controls-v1.element';
-import {VirGameV1} from './route-pages/game/vir-game.element';
-import {VirStateDebug} from './vir-state-debug.element';
+import {VirAssignControlsV1} from './assign-controls/vir-assign-controls-v1.element';
+import {VirGameV1} from './vir-game-v1.element';
+import {VirStateDebugV1} from './vir-state-debug-v1.element';
 
 export const VirForwardGameAppV1 = defineElement<{
     currentRoute: GameFullRoute;
@@ -20,6 +20,7 @@ export const VirForwardGameAppV1 = defineElement<{
     stateInitStatic: {
         gamePipeline: undefined as undefined | ForwardGamePipeline,
         debug: false,
+        cleanup: undefined as undefined | (() => void),
     },
     styles: css`
         :host,
@@ -35,7 +36,7 @@ export const VirForwardGameAppV1 = defineElement<{
         main > * {
             flex-grow: 1;
         }
-        ${VirStateDebug} {
+        ${VirStateDebugV1} {
             position: absolute;
             top: 0;
             left: 0;
@@ -48,7 +49,25 @@ export const VirForwardGameAppV1 = defineElement<{
             z-index: 999999999;
         }
     `,
+    initCallback({state, updateState}) {
+        if (!state.cleanup) {
+            function keydownListener(event: KeyboardEvent) {
+                if ((event.key === 'D' || event.key === '∂') && event.altKey) {
+                    updateState({debug: !state.debug});
+                }
+            }
+
+            window.addEventListener('keydown', keydownListener);
+
+            updateState({
+                cleanup: () => {
+                    window.removeEventListener('keydown', keydownListener);
+                },
+            });
+        }
+    },
     cleanupCallback({state}) {
+        state.cleanup?.();
         state.gamePipeline?.destroy();
     },
     renderCallback({state, updateState, inputs, dispatch}) {
@@ -82,16 +101,12 @@ export const VirForwardGameAppV1 = defineElement<{
             ${renderIf(
                 state.debug,
                 html`
-                    <${VirStateDebug.assign({
+                    <${VirStateDebugV1.assign({
                         gamePipeline: state.gamePipeline,
-                    })}></${VirStateDebug}>
+                    })}></${VirStateDebugV1}>
                 `,
             )}
-            <main
-                ${listen(BreakingErrorEvent, (event) => {
-                    console.error(event.detail);
-                })}
-            >
+            <main>
                 ${showGame
                     ? html`
                           <${VirGameV1.assign({gamePipeline: state.gamePipeline})}
@@ -111,7 +126,9 @@ export const VirForwardGameAppV1 = defineElement<{
                               ${listen(VirGameV1.events.win, () => {
                                   state.gamePipeline?.update({
                                       stateUpdate: {
-                                          haveWon: true,
+                                          runTime: {
+                                              haveWon: true,
+                                          },
                                       },
                                   });
                               })}
@@ -135,14 +152,7 @@ export const VirForwardGameAppV1 = defineElement<{
                                       }),
                                   );
                                   state.gamePipeline?.update({
-                                      stateUpdate: {
-                                          isPaused: false,
-                                          haveWon: false,
-                                          playerPosition: {
-                                              x: 0,
-                                              y: 0,
-                                          },
-                                      },
+                                      stateUpdate: startNewRunGameState,
                                   });
                               })}
                           ></${VirAssignControlsV1}>

@@ -1,6 +1,6 @@
 import {waitForAnimationFrame} from '@augment-vir/browser';
 import {css, defineElement, defineElementEvent, html, listen, renderIf} from 'element-vir';
-import {ForwardGamePipeline} from '../../../game-pipeline/forward-game-pipeline';
+import {ForwardGamePipeline} from '../game-pipeline/forward-game-pipeline';
 
 export const VirGameV1 = defineElement<{gamePipeline: ForwardGamePipeline}>()({
     tagName: 'vir-game-v1',
@@ -105,15 +105,36 @@ export const VirGameV1 = defineElement<{gamePipeline: ForwardGamePipeline}>()({
         win: defineElementEvent<void>(),
     },
     initCallback({inputs, updateState}) {
-        inputs.gamePipeline.addStateListener(true, ['playerPosition'], (playerPosition) => {
-            updateState({playerPosition});
-        });
-        inputs.gamePipeline.addStateListener(true, ['isPaused'], (isPaused) => {
-            updateState({isPaused});
-        });
-        inputs.gamePipeline.addStateListener(true, ['haveWon'], (haveWon) => {
-            updateState({haveWon});
-        });
+        inputs.gamePipeline.addStateListener(
+            true,
+            [
+                'runTime',
+                'playerPosition',
+            ],
+            (playerPosition) => {
+                updateState({playerPosition});
+            },
+        );
+        inputs.gamePipeline.addStateListener(
+            true,
+            [
+                'runTime',
+                'isPaused',
+            ],
+            (isPaused) => {
+                updateState({isPaused});
+            },
+        );
+        inputs.gamePipeline.addStateListener(
+            true,
+            [
+                'runTime',
+                'haveWon',
+            ],
+            (haveWon) => {
+                updateState({haveWon});
+            },
+        );
     },
     cleanupCallback({state}) {
         state.cleanup?.();

@@ -3,7 +3,7 @@ import {html} from 'element-vir';
 import {assertInstanceOf} from 'run-time-assertions';
 import {defaultGameRoute, gameVersions} from '../../../router/routes';
 import {fixtureIt} from '../testing/fixture-test';
-import {VirForwardGameAppV1} from './vir-forward-game-app.element';
+import {VirForwardGameAppV1} from './vir-forward-game-app-v1.element';
 
 describe(VirForwardGameAppV1.tagName, () => {
     fixtureIt('renders', async () => {

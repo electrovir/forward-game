@@ -26,7 +26,7 @@ export const gameVersionData: AllGameVersionData = {
     [ForwardGameRouteEnum.V1]: {
         description: 'First working version. With controller support!',
         async loadVersionElement() {
-            return (await import('../../v1/elements/vir-forward-game-app.element'))
+            return (await import('../../v1/elements/vir-forward-game-app-v1.element'))
                 .VirForwardGameAppV1;
         },
     },

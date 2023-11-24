@@ -1,9 +1,62 @@
-import {GameModule, GamePipeline, GamePipelineStates} from 'game-vir';
+import {mergeDeep} from '@augment-vir/common';
+import {GameModule, GamePipeline, ModulesToPipelineStates} from 'game-vir';
 import {InputDeviceHandler} from 'input-device-handler';
-import {createSaveGameModule, defaultSaveGameAccess} from './game-modules/game-save.module';
+import {PartialDeep} from 'type-fest';
+import {defaultSaveAccess, gameSaveModule} from './game-modules/game-save.module';
 import {mapToActionsModule} from './game-modules/map-to-actions.module';
-import {performActionsModule} from './game-modules/perform-actions.module';
+import {defaultBindings, performActionsModule} from './game-modules/perform-actions.module';
 import {readInputsModule} from './game-modules/read-inputs.module';
+
+const gameModules = [
+    readInputsModule,
+    mapToActionsModule,
+    performActionsModule,
+    gameSaveModule,
+] as const satisfies ReadonlyArray<GameModule<any, any>>;
+
+export type ForwardGameState = ModulesToPipelineStates<typeof gameModules>['state'];
+
+export type ForwardGameExecutionContext = ModulesToPipelineStates<
+    typeof gameModules
+>['executionContext'];
+
+export const startNewRunGameState = {
+    runTime: {
+        isPaused: false,
+        haveWon: false,
+        playerPosition: {
+            x: 0,
+            y: 0,
+        },
+    },
+} as const satisfies Readonly<PartialDeep<ForwardGameState>>;
+
+export const resetToDefaultsGameState = {
+    settings: {
+        deadZoneSettings: {},
+        actionBindings: defaultBindings,
+        saveInterval: {
+            milliseconds: 10000,
+        },
+    },
+} as const satisfies Readonly<PartialDeep<ForwardGameState>>;
+
+const startingGameState = mergeDeep<ForwardGameState>(
+    resetToDefaultsGameState,
+    startNewRunGameState,
+    {
+        runTime: {
+            currentActions: [],
+            saveNextFrame: false,
+            initialLoadAttempted: false,
+            lastTimeSaved: {
+                milliseconds: Date.now(),
+            },
+            currentDevices: [],
+            currentInputs: [],
+        },
+    },
+);
 
 export function createForwardGamePipeline({
     startImmediately,
@@ -12,47 +65,16 @@ export function createForwardGamePipeline({
     startImmediately: boolean;
     delay?: {milliseconds: number} | undefined;
 }) {
-    const gameModules = [
-        readInputsModule,
-        mapToActionsModule,
-        performActionsModule,
-        createSaveGameModule([
-            'deadZoneSettings',
-            'actionBindings',
-            'saveInterval',
-        ]),
-    ] as const;
-
     const forwardGamePipeline = new GamePipeline(
         /** Insert the full device handler type even if the original modules only need parts of it. */
         gameModules as unknown as [
             ...typeof gameModules,
             GameModule<{}, {inputHandler: InputDeviceHandler}>,
         ],
-        {
-            currentActions: [],
-            currentDevices: [],
-            currentInputs: [],
-            deadZoneSettings: {},
-            actionBindings: {},
-            isPaused: true,
-            saveInterval: {
-                milliseconds: 10_000,
-            },
-            playerPosition: {
-                x: 0,
-                y: 0,
-            },
-            haveWon: false,
-            initialLoadAttempted: false,
-            saveNextFrame: false,
-        },
+        startingGameState,
         {
             inputHandler: new InputDeviceHandler(),
-            lastTimeSaved: {
-                milliseconds: Date.now(),
-            },
-            saveGameAccess: defaultSaveGameAccess,
+            saveAccess: defaultSaveAccess,
         },
         {
             init: {
@@ -71,8 +93,3 @@ export function createForwardGamePipeline({
 }
 
 export type ForwardGamePipeline = ReturnType<typeof createForwardGamePipeline>;
-
-export type ForwardGameState = GamePipelineStates<ForwardGamePipeline>['state'];
-
-export type ForwardGameExecutionContext =
-    GamePipelineStates<ForwardGamePipeline>['executionContext'];
