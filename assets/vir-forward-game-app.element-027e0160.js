@@ -1,4 +1,4 @@
-import{F as y,i as w,a as P,d as k,b as h,c as v,e as b,w as C,h as r,r as f,l as s,g as p,C as d,f as $,V as u,j as S,G as V}from"./index-0061cf1f.js";var l=(e=>(e.AssignControls="assign-controls",e.Play="play",e))(l||{});const E=[y.V1,"assign-controls"];function x(e){return!w(e.paths,2)||!P(e.paths[1],l)?{...e,paths:E}:e}function z(e){return x(e)!==e}const W=k()("breaking-error"),c=h()({tagName:"vir-game-v1",styles:v`
+import{F as y,i as w,a as P,d as k,b as h,c as v,e as b,w as C,h as r,r as f,l as s,g as p,C as d,f as $,V as u,j as S,G as V}from"./index-73b6f2ed.js";var l=(e=>(e.AssignControls="assign-controls",e.Play="play",e))(l||{});const E=[y.V1,"assign-controls"];function x(e){return!w(e.paths,2)||!P(e.paths[1],l)?{...e,paths:E}:e}function z(e){return x(e)!==e}const W=k()("breaking-error"),c=h()({tagName:"vir-game-v1",styles:v`
         :host {
             height: 100%;
             width: 100%;
