@@ -1,10 +1,10 @@
 import {itCases} from '@augment-vir/browser-testing';
 import {omitObjectKeys} from '@augment-vir/common';
 import {keyboardBaseDevice, mouseBaseDevice} from 'input-device-handler';
-import {defaultGameStateForReadingInputs, readInputs} from './read-inputs.game-module';
+import {defaultGameStateForReadingInputs, readInputsModule} from './read-inputs.module';
 
-describe(readInputs.moduleId.name, () => {
-    itCases(readInputs.runModule, [
+describe(readInputsModule.moduleId.name, () => {
+    itCases(readInputsModule.runModule, [
         {
             it: 'changes nothing if there are no devices or inputs',
             input: {
@@ -20,12 +20,7 @@ describe(readInputs.moduleId.name, () => {
                 },
                 millisecondsSinceLastFrame: 0,
             },
-            expect: {
-                stateChange: {
-                    currentDevices: [],
-                    currentInputs: [],
-                },
-            },
+            expect: undefined,
         },
         {
             it: 'adds new devices',
@@ -52,12 +47,11 @@ describe(readInputs.moduleId.name, () => {
                 millisecondsSinceLastFrame: 0,
             },
             expect: {
-                stateChange: {
+                stateUpdate: {
                     currentDevices: [
                         omitObjectKeys(keyboardBaseDevice, ['deviceDetails']),
                         omitObjectKeys(mouseBaseDevice, ['deviceDetails']),
                     ],
-                    currentInputs: [],
                 },
             },
         },
@@ -98,7 +92,7 @@ describe(readInputs.moduleId.name, () => {
                 millisecondsSinceLastFrame: 0,
             },
             expect: {
-                stateChange: {
+                stateUpdate: {
                     currentDevices: [
                         omitObjectKeys(keyboardBaseDevice, ['deviceDetails']),
                         omitObjectKeys(mouseBaseDevice, ['deviceDetails']),

@@ -1,7 +1,8 @@
 import {css, defineElement, html, listen} from 'element-vir';
 import {ViraLink, noNativeFormStyles, noNativeSpacing, viraAnimationDurations} from 'vira';
-import {ChangeRouteEvent, GameFullRoute, GameRouter} from '../../../../router/game-router';
-import {AllGameVersionData} from '../../data/game-version-data';
+import {ChangeRouteEvent, GameRouter} from '../../../router/game-router';
+import {GameFullRoute} from '../../../router/routes';
+import {AllGameVersionData} from '../data/game-version-data';
 
 export const VirSelectGameVersion = defineElement<{
     versionData: AllGameVersionData;

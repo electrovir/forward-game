@@ -1,6 +1,6 @@
 import {shuffleArray} from '@augment-vir/browser';
 import {wrapNumber} from '@augment-vir/common';
-import {defineElement, html} from 'element-vir';
+import {css, defineElement, html} from 'element-vir';
 
 export type Animation = {
     timestamp: number;
@@ -25,6 +25,11 @@ export const VirGlowAnimation = defineElement<{
     animation: undefined | Readonly<Animation>;
 }>()({
     tagName: 'vir-glow-animation',
+    styles: css`
+        :host {
+            display: inline-flex;
+        }
+    `,
     stateInitStatic: {
         lastTimestamp: 0,
         colorIndex: 0,
@@ -62,10 +67,10 @@ export const VirGlowAnimation = defineElement<{
             host.animate(
                 [
                     {
-                        filter: `drop-shadow(0 0 6px ${color})`,
+                        filter: `drop-shadow(0 0 6px ${color}) drop-shadow(0 0 6px ${color})`,
                     },
                     {
-                        filter: `drop-shadow(0 0 0 ${color})`,
+                        filter: `drop-shadow(0 0 0 ${color}) drop-shadow(0 0 0 ${color})`,
                     },
                 ],
                 {

@@ -1,19 +1,21 @@
-import {gameVersionNames} from '../../../../data/versions';
-import {GameFullRoute} from '../../../../router/game-router';
+import {isEnumValue, isLengthAtLeast} from '@augment-vir/common';
+import {ForwardGameRouteEnum, GameFullRoute} from '../../../../router/routes';
 
 export enum V1RoutesEnum {
     AssignControls = 'assign-controls',
     Play = 'play',
 }
 
+const defaultV1Paths = [
+    ForwardGameRouteEnum.V1,
+    V1RoutesEnum.AssignControls,
+] as const;
+
 export function sanitizeV1Route(fullRoute: GameFullRoute): GameFullRoute {
-    if (fullRoute.paths.length < 2) {
+    if (!isLengthAtLeast(fullRoute.paths, 2) || !isEnumValue(fullRoute.paths[1], V1RoutesEnum)) {
         return {
             ...fullRoute,
-            paths: [
-                gameVersionNames.v1,
-                V1RoutesEnum.AssignControls,
-            ],
+            paths: defaultV1Paths,
         };
     } else {
         return fullRoute;

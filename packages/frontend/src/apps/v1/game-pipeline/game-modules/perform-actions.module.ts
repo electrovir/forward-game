@@ -1,7 +1,7 @@
-import {isEnumValue} from '@augment-vir/common';
+import {clamp, isEnumValue, isTruthy, mergeDeep, round} from '@augment-vir/common';
 import {GameModule} from 'game-vir';
-import {round} from '../../../../util/number';
-import {GameStateForMappingInputs} from './map-inputs-to-actions.game-module';
+import {PartialDeep} from 'type-fest';
+import {GameStateForMappingInputs} from './map-to-actions.module';
 
 export enum GameAction {
     Up = 'up',
@@ -11,60 +11,48 @@ export enum GameAction {
     Pause = 'pause',
 }
 
-export const defaultPlayerGameState: GameStateForPlayer = {
-    playerPosition: {
-        x: 0,
-        y: 0,
-    },
-    paused: false,
-    win: false,
-};
-
-type GameStateForPlayer = {
+export type GameStateForActions = GameStateForMappingInputs & {
     playerPosition: {
         x: number;
         y: number;
     };
-    paused: boolean;
-    win: boolean;
+    isPaused: boolean;
+    haveWon: boolean;
 };
 
-export type GameStateForActions = GameStateForMappingInputs & GameStateForPlayer;
-
-export const performActions: GameModule<GameStateForActions> = {
+export const performActionsModule: GameModule<GameStateForActions> = {
     moduleId: {
         name: 'perform-actions',
         version: 1,
     },
     runModule({gameState, millisecondsSinceLastFrame}) {
-        const newPosition = calculateNewPosition(gameState, millisecondsSinceLastFrame);
+        const stateUpdate = calculateNewState(gameState, millisecondsSinceLastFrame);
 
-        if (!newPosition) {
+        if (!stateUpdate) {
             return undefined;
         }
 
         return {
-            stateChange: {
-                playerPosition: newPosition,
-            },
+            stateUpdate,
         };
     },
 };
 
 const movementPerMillisecond = 0.24;
 
-function calculateNewPosition(
-    gameState: Pick<GameStateForActions, 'currentActions' | 'playerPosition' | 'win' | 'paused'>,
+function calculateNewState(
+    gameState: GameStateForActions,
     millisecondsSinceLastFrame: number,
-): GameStateForActions['playerPosition'] | undefined {
-    if (gameState.win || gameState.paused) {
-        return gameState.playerPosition;
+): PartialDeep<GameStateForActions> | undefined {
+    if (gameState.haveWon) {
+        return undefined;
     }
 
     const fullMovement = movementPerMillisecond * millisecondsSinceLastFrame;
 
     let verticalMovement = 0;
     let horizontalMovement = 0;
+    let pauseChange: boolean | undefined = undefined;
 
     gameState.currentActions.forEach((currentAction) => {
         if (!isEnumValue(currentAction.actionName, GameAction)) {
@@ -89,8 +77,20 @@ function calculateNewPosition(
                 number: Math.min(currentAction.value, 1) * fullMovement,
                 digits: 1,
             });
+        } else if (
+            currentAction.actionName === GameAction.Pause &&
+            currentAction.frameCount === 1
+        ) {
+            pauseChange = !gameState.isPaused;
         }
     });
+
+    horizontalMovement = clamp({
+        value: horizontalMovement,
+        max: fullMovement,
+        min: -1 * fullMovement,
+    });
+    verticalMovement = clamp({value: verticalMovement, max: fullMovement, min: -1 * fullMovement});
 
     if (horizontalMovement && verticalMovement) {
         const diagonalMovement = Math.sqrt(
@@ -102,13 +102,30 @@ function calculateNewPosition(
             horizontalMovement = horizontalMovement * (fullMovement / diagonalMovement);
         }
     }
+    const hasMovement = horizontalMovement || verticalMovement;
 
-    if (!horizontalMovement && !verticalMovement) {
+    const updates: ReadonlyArray<PartialDeep<GameStateForActions>> = [
+        !gameState.isPaused &&
+            hasMovement && {
+                playerPosition: {
+                    x: round({
+                        number: gameState.playerPosition.x + horizontalMovement,
+                        digits: 2,
+                    }),
+                    y: round({
+                        number: gameState.playerPosition.y + verticalMovement,
+                        digits: 2,
+                    }),
+                },
+            },
+        pauseChange !== undefined && {isPaused: pauseChange},
+    ].filter(isTruthy);
+
+    if (!updates.length) {
         return undefined;
     }
 
-    return {
-        x: gameState.playerPosition.x + horizontalMovement,
-        y: gameState.playerPosition.y + verticalMovement,
-    };
+    const stateUpdate = mergeDeep(...updates);
+
+    return stateUpdate;
 }

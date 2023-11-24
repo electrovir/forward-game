@@ -5,8 +5,14 @@ import * as importedRepoConfig from '../../../../.prettierrc.js';
 
 const repoConfig: PrettierOptions = importedRepoConfig as PrettierOptions;
 
-export function formatCode({text, filePath}: {text: string; filePath: string}): string {
-    return prettierFormat(text, {
+export async function formatCode({
+    text,
+    filePath,
+}: {
+    text: string;
+    filePath: string;
+}): Promise<string> {
+    return await prettierFormat(text, {
         ...repoConfig,
         filepath: filePath,
     });

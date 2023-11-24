@@ -1,8 +1,8 @@
 import {defineBookPage} from 'element-book';
 import {css, defineElement, html, listen} from 'element-vir';
-import {InputDeviceTypeEnum} from 'input-device-handler';
+import {gamepadInputDeviceKey} from 'input-device-handler';
 import {noUserSelect} from 'vira';
-import {deviceEmojis} from '../../device-display';
+import {DeviceSizeEnum, VirDeviceDisplay} from './vir-device-display.element';
 import {Animation, VirGlowAnimation} from './vir-glow-animation.element';
 
 const VirAnimationBookWrapper = defineElement<{milliseconds: number}>()({
@@ -26,15 +26,20 @@ const VirAnimationBookWrapper = defineElement<{milliseconds: number}>()({
             updateState({intervalId: undefined});
         }
     },
-    styles: css`
-        :host {
-            font-size: 4em;
-        }
-    `,
     renderCallback({state}) {
-        return html`<${VirGlowAnimation.assign({
-            animation: state.animation,
-        })}>${deviceEmojis[InputDeviceTypeEnum.Gamepad]}</${VirGlowAnimation}>`;
+        return html`
+            <${VirGlowAnimation.assign({
+                animation: state.animation,
+            })}>
+                <${VirDeviceDisplay.assign({
+                    animated: false,
+                    deviceKey: gamepadInputDeviceKey.gamepad1,
+                    inputHandler: undefined,
+                    displayShortKey: false,
+                    size: DeviceSizeEnum.Large,
+                })}></${VirDeviceDisplay}>
+            </${VirGlowAnimation}>
+        `;
     },
 });
 
@@ -44,10 +49,17 @@ export const glowAnimationPage = defineBookPage({
     elementExamplesCallback({defineExample}) {
         defineExample({
             title: 'automatic',
+            styles: css`
+                :host {
+                    ${noUserSelect};
+                }
+            `,
             renderCallback() {
-                return html`<${VirAnimationBookWrapper.assign({
-                    milliseconds: 500,
-                })}></${VirAnimationBookWrapper}>`;
+                return html`
+                    <${VirAnimationBookWrapper.assign({
+                        milliseconds: 500,
+                    })}></${VirAnimationBookWrapper}>
+                `;
             },
         });
         defineExample({
@@ -58,19 +70,30 @@ export const glowAnimationPage = defineBookPage({
             styles: css`
                 :host {
                     ${noUserSelect};
-                    font-size: 4em;
                 }
             `,
             renderCallback({state, updateState}) {
-                return html`<${VirGlowAnimation.assign({
-                    animation: state.animation,
-                })} ${listen('click', () => {
-                    updateState({
-                        animation: {
-                            timestamp: Date.now(),
-                        },
-                    });
-                })}>${deviceEmojis[InputDeviceTypeEnum.Gamepad]}</${VirGlowAnimation}>`;
+                return html`
+                    <${VirGlowAnimation.assign({
+                        animation: state.animation,
+                    })}
+                        ${listen('click', () => {
+                            updateState({
+                                animation: {
+                                    timestamp: Date.now(),
+                                },
+                            });
+                        })}
+                    >
+                        <${VirDeviceDisplay.assign({
+                            animated: false,
+                            deviceKey: gamepadInputDeviceKey.gamepad1,
+                            inputHandler: undefined,
+                            displayShortKey: false,
+                            size: DeviceSizeEnum.Large,
+                        })}></${VirDeviceDisplay}>
+                    </${VirGlowAnimation}>
+                `;
             },
         });
     },

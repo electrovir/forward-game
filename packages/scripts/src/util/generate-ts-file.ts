@@ -8,6 +8,6 @@ export async function generateTsFile(code: string, filePath: string): Promise<vo
         generatedFileComment,
         code,
     ].join('\n\n');
-    const formattedCode = formatCode({text: fullCode, filePath});
+    const formattedCode = await formatCode({text: fullCode, filePath});
     await writeFile(filePath, formattedCode);
 }

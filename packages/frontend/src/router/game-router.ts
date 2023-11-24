@@ -1,18 +1,12 @@
 import {defineTypedEvent} from 'element-vir';
-import {createSpaRouter, FullRoute} from 'spa-router-vir';
-import {GameVersionName, gameVersionNames} from '../data/versions';
-
-export const versionSelectorPath = 'version-selector' as const;
-
-export type GameRoutePath = [GameVersionName, ...string[]] | [typeof versionSelectorPath];
-
-export type GameFullRoute = Required<Readonly<FullRoute<GameRoutePath>>>;
-
-export const defaultGameRoute: GameFullRoute = {
-    paths: [versionSelectorPath],
-    search: undefined,
-    hash: undefined,
-};
+import {createSpaRouter} from 'spa-router-vir';
+import {
+    ForwardGameRouteEnum,
+    GameFullRoute,
+    GameRoutePath,
+    defaultGameRoute,
+    gameVersions,
+} from './routes';
 
 let routerCreationCount = 0;
 
@@ -31,12 +25,14 @@ export function getGameRouter() {
 
             if (!firstPath) {
                 return defaultGameRoute;
-            } else if (firstPath === versionSelectorPath) {
+            } else if (firstPath === ForwardGameRouteEnum.VersionSelector) {
                 return {
                     ...rawRoute,
-                    paths: [versionSelectorPath],
+                    paths: [ForwardGameRouteEnum.VersionSelector],
                 };
-            } else if (firstPath in gameVersionNames) {
+            } else if (firstPath in gameVersions) {
+                return rawRoute as GameFullRoute;
+            } else if (firstPath === ForwardGameRouteEnum.Design) {
                 return rawRoute as GameFullRoute;
             } else {
                 return defaultGameRoute;

@@ -1,30 +1,8 @@
-import {areJsonEqual, typedHasProperty} from '@augment-vir/common';
+import {waitForAnimationFrame} from '@augment-vir/browser';
 import {css, defineElement, defineElementEvent, html, listen, renderIf} from 'element-vir';
-import {
-    CurrentInputsChangedEvent,
-    InputDeviceEventTypeEnum,
-    InputDeviceHandler,
-} from 'input-device-handler';
-import {round} from '../../../../../util/number';
-import {BasicInputDevice} from '../../../data/basic-input-device';
-import {GameLoopHandler} from '../../../data/game-loop';
-import {ReadInputsOutput, readInputs} from '../../../data/read-inputs';
-import {ForwardGameSettings} from '../../../data/settings/game-settings-type';
-import {AvailableControls} from '../../../data/settings/input-binding-settings';
-import {BreakingErrorEvent} from '../../global-events/breaking-error.event';
+import {ForwardGamePipeline} from '../../../game-pipeline/forward-game-pipeline';
 
-type GameInputs = {
-    gameSettings: ForwardGameSettings;
-    selectedDevice: BasicInputDevice;
-    inputHandler: InputDeviceHandler;
-};
-
-type GamePosition = {
-    x: number;
-    y: number;
-};
-
-export const VirGameV1 = defineElement<GameInputs>()({
+export const VirGameV1 = defineElement<{gamePipeline: ForwardGamePipeline}>()({
     tagName: 'vir-game-v1',
     styles: css`
         :host {
@@ -114,93 +92,42 @@ export const VirGameV1 = defineElement<GameInputs>()({
         }
     `,
     stateInitStatic: {
-        currentPosition: {
+        cleanup: undefined as undefined | (() => void),
+        playerPosition: {
             x: 0,
             y: 0,
-        } as GamePosition,
-        paused: false,
-        cleanup: undefined as undefined | (() => void),
-        win: false,
+        },
+        isPaused: false,
+        haveWon: false,
     },
     events: {
         exit: defineElementEvent<void>(),
+        win: defineElementEvent<void>(),
     },
-    initCallback: ({inputs, state, host, updateState, dispatch}) => {
-        function readBindings() {
-            const currentBindings =
-                inputs.gameSettings.bindings[inputs.selectedDevice.deviceName]?.bindings;
-
-            if (!currentBindings) {
-                const error = new Error(
-                    `current bindings for "${inputs.selectedDevice.deviceName}" not found.`,
-                );
-                dispatch(new BreakingErrorEvent(error));
-                throw error;
-            }
-
-            return currentBindings;
-        }
-
-        const gameLoop = new GameLoopHandler();
-
-        gameLoop.addLoopCallback(() => {
-            const allDevices = inputs.inputHandler.readAllDevices();
-            console.log(allDevices);
-
-            const isWithinWinCondition = checkWinCondition(host);
-            if (isWithinWinCondition) {
-                updateState({win: true});
-            }
-
-            const currentControls = readInputs(
-                Object.values(allDevices[inputs.selectedDevice.deviceKey]?.currentInputs ?? {}),
-                readBindings(),
-            );
-
-            if (state.paused || state.win) {
-                return;
-            }
-            const newPosition = getNewPosition(currentControls, state.currentPosition);
-
-            if (!areJsonEqual(newPosition, state.currentPosition)) {
-                updateState({currentPosition: newPosition});
-            }
+    initCallback({inputs, updateState}) {
+        inputs.gamePipeline.addStateListener(true, ['playerPosition'], (playerPosition) => {
+            updateState({playerPosition});
         });
-
-        function listener(event: CurrentInputsChangedEvent) {
-            const newInputs = event.detail.inputs.newInputs.filter(
-                (input) => input.deviceKey === inputs.selectedDevice.deviceKey,
-            );
-
-            const newControls = readInputs(newInputs, readBindings());
-
-            if (newControls.hasOwnProperty(AvailableControls.Pause)) {
-                updateState({paused: !state.paused});
-            }
-        }
-
-        inputs.inputHandler.addEventListener(
-            InputDeviceEventTypeEnum.CurrentInputsChanged,
-            listener,
-        );
-
-        updateState({
-            cleanup: () => {
-                inputs.inputHandler.removeEventListener(
-                    InputDeviceEventTypeEnum.CurrentInputsChanged,
-                    listener,
-                );
-                gameLoop.destroy();
-            },
+        inputs.gamePipeline.addStateListener(true, ['isPaused'], (isPaused) => {
+            updateState({isPaused});
+        });
+        inputs.gamePipeline.addStateListener(true, ['haveWon'], (haveWon) => {
+            updateState({haveWon});
         });
     },
     cleanupCallback({state}) {
         state.cleanup?.();
     },
-    renderCallback: ({state, dispatch, events}) => {
-        console.log('render');
-        const shouldPause = state.win || state.paused;
-        const shipStyle = `top: ${state.currentPosition.y}px; left: ${state.currentPosition.x}px`;
+    renderCallback: ({state, dispatch, events, host}) => {
+        /** Run this in a timeout so it detects the ship movement after the current render. */
+        setTimeout(async () => {
+            await waitForAnimationFrame();
+            if (!state.haveWon && checkWinCondition(host)) {
+                dispatch(new events.win());
+            }
+        });
+        const shouldPause = state.haveWon || state.isPaused;
+        const shipStyle = `top: ${state.playerPosition.y}px; left: ${state.playerPosition.x}px`;
 
         return html`
             ${renderIf(
@@ -209,7 +136,7 @@ export const VirGameV1 = defineElement<GameInputs>()({
                     <div class="pause-screen">
                         <div class="pause-background"></div>
                         <div class="pause-info">
-                            <span>${state.win ? 'You Win!' : 'Paused'}</span>
+                            <span>${state.haveWon ? 'You Win!' : 'Paused'}</span>
                             <button
                                 class="exit-button"
                                 ${listen('click', () => {
@@ -229,55 +156,6 @@ export const VirGameV1 = defineElement<GameInputs>()({
         `;
     },
 });
-
-const fullMovement = 4;
-
-function getNewPosition(controls: ReadInputsOutput, currentPosition: GamePosition) {
-    let verticalMovement = 0;
-    let horizontalMovement = 0;
-
-    if (typedHasProperty(controls, AvailableControls.Down)) {
-        verticalMovement += round({
-            number: Math.min(controls[AvailableControls.Down]!, 1) * fullMovement,
-            digits: 1,
-        });
-    }
-    if (typedHasProperty(controls, AvailableControls.Up)) {
-        verticalMovement -= round({
-            number: Math.min(controls[AvailableControls.Up]!, 1) * fullMovement,
-            digits: 1,
-        });
-    }
-
-    if (typedHasProperty(controls, AvailableControls.Right)) {
-        horizontalMovement += round({
-            number: Math.min(controls[AvailableControls.Right]!, 1) * fullMovement,
-            digits: 1,
-        });
-    }
-    if (typedHasProperty(controls, AvailableControls.Left)) {
-        horizontalMovement -= round({
-            number: Math.min(controls[AvailableControls.Left]!, 1) * fullMovement,
-            digits: 1,
-        });
-    }
-
-    if (horizontalMovement && verticalMovement) {
-        const diagonalMovement = Math.sqrt(
-            Math.pow(horizontalMovement, 2) + Math.pow(verticalMovement, 2),
-        );
-
-        if (diagonalMovement > fullMovement) {
-            verticalMovement = verticalMovement * (fullMovement / diagonalMovement);
-            horizontalMovement = horizontalMovement * (fullMovement / diagonalMovement);
-        }
-    }
-
-    return {
-        x: currentPosition.x + horizontalMovement,
-        y: currentPosition.y + verticalMovement,
-    };
-}
 
 function checkWinCondition(host: HTMLElement): boolean {
     const winElement = host.shadowRoot?.querySelector('.victory-location');

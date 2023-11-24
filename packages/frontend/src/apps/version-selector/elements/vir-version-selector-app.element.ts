@@ -1,13 +1,13 @@
 import {asyncProp, css, defineElementNoInputs, html, listen, renderAsync} from 'element-vir';
-import {isGameVersion} from '../../../../data/versions';
+import {ChangeRouteEvent, getGameRouter} from '../../../router/game-router';
 import {
-    ChangeRouteEvent,
+    ForwardGameRouteEnum,
     GameRoutePath,
     defaultGameRoute,
-    getGameRouter,
-    versionSelectorPath,
-} from '../../../../router/game-router';
-import {gameVersionData} from '../../data/game-version-data';
+    isGameVersion,
+} from '../../../router/routes';
+import {VirForwardGameBook} from '../../element-book/ui/elements/vir-forward-game-book.element';
+import {gameVersionData} from '../data/game-version-data';
 import {VirSelectGameVersion} from './vir-select-game-version.element';
 
 export const VirVersionSelector = defineElementNoInputs({
@@ -68,35 +68,41 @@ export const VirVersionSelector = defineElementNoInputs({
         });
 
         const appTemplate =
-            state.currentRoute.paths[0] === versionSelectorPath
+            state.currentRoute.paths[0] === ForwardGameRouteEnum.VersionSelector
                 ? html`
                       <${VirSelectGameVersion.assign({
                           versionData: gameVersionData,
                           router: state.router,
                       })}></${VirSelectGameVersion}>
                   `
-                : renderAsync(
-                      state.currentGameVersionElement,
-                      html`
-                          <div class="loading">Loading...</div>
-                      `,
-                      (resolved) => {
-                          if (!resolved) {
-                              return 'Failed';
-                          }
+                : state.currentRoute.paths[0] === ForwardGameRouteEnum.Design
+                  ? html`
+                        <${VirForwardGameBook.assign({
+                            currentRoute: state.currentRoute,
+                        })}></${VirForwardGameBook}>
+                    `
+                  : renderAsync(
+                        state.currentGameVersionElement,
+                        html`
+                            <div class="loading">Loading...</div>
+                        `,
+                        (resolved) => {
+                            if (!resolved) {
+                                return 'Failed';
+                            }
 
-                          return html`
-                              <${resolved.assign({
-                                  currentRoute: state.currentRoute,
-                              })}></${resolved}>
-                          `;
-                      },
-                      (error) => {
-                          return html`
-                              Failed: ${error.message}
-                          `;
-                      },
-                  );
+                            return html`
+                                <${resolved.assign({
+                                    currentRoute: state.currentRoute,
+                                })}></${resolved}>
+                            `;
+                        },
+                        (error) => {
+                            return html`
+                                Failed: ${error.message}
+                            `;
+                        },
+                    );
 
         return html`
             <div

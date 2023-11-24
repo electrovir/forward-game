@@ -1,31 +1,32 @@
-import {assign, css, defineElement, html, listen} from 'element-vir';
-import {InputDeviceHandler} from 'input-device-handler';
-import {gameVersionNames} from '../../../data/versions';
-import {ChangeRouteEvent, GameFullRoute} from '../../../router/game-router';
-import {BasicInputDevice} from '../data/basic-input-device';
+import {getEnumTypedValues} from '@augment-vir/common';
+import {css, defineElement, html, listen, renderIf} from 'element-vir';
+import {ChangeRouteEvent} from '../../../router/game-router';
+import {GameFullRoute, gameVersions} from '../../../router/routes';
 import {V1RoutesEnum, doesRouteNeedSanitization, sanitizeV1Route} from '../data/routing/v1-routes';
-import {getGameSettings, saveGameSettings} from '../data/settings/game-settings';
+import {
+    ForwardGamePipeline,
+    createForwardGamePipeline,
+} from '../game-pipeline/forward-game-pipeline';
+import {GameAction} from '../game-pipeline/game-modules/perform-actions.module';
 import {BreakingErrorEvent} from './global-events/breaking-error.event';
-import {UpdateGameSettingsEvent} from './global-events/update-game-settings.event';
-import {VirAssignControlsV1} from './route-pages/assign-controls/vir-assign-controls.element';
+import {VirAssignControlsV1} from './route-pages/assign-controls/vir-assign-controls-v1.element';
 import {VirGameV1} from './route-pages/game/vir-game.element';
+import {VirStateDebug} from './vir-state-debug.element';
 
-const initialGameSettings = getGameSettings();
-
-export const VirForwardGameAppV1 = defineElement<{currentRoute: GameFullRoute}>()({
+export const VirForwardGameAppV1 = defineElement<{
+    currentRoute: GameFullRoute;
+}>()({
     tagName: 'vir-forward-game-app-v1',
     stateInitStatic: {
-        inputHandler: new InputDeviceHandler({
-            gamepadDeadZoneSettings: initialGameSettings.gamepadSettings.deadZones,
-        }),
-        gameSettings: initialGameSettings,
-        selectedDevice: undefined as BasicInputDevice | undefined,
+        gamePipeline: undefined as undefined | ForwardGamePipeline,
+        debug: false,
     },
     styles: css`
         :host,
         main {
             width: 100%;
             height: 100%;
+            position: relative;
         }
         main {
             display: flex;
@@ -34,9 +35,24 @@ export const VirForwardGameAppV1 = defineElement<{currentRoute: GameFullRoute}>(
         main > * {
             flex-grow: 1;
         }
+        ${VirStateDebug} {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: white;
+            border: 1px solid black;
+            max-height: 90vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 20px;
+            z-index: 999999999;
+        }
     `,
+    cleanupCallback({state}) {
+        state.gamePipeline?.destroy();
+    },
     renderCallback({state, updateState, inputs, dispatch}) {
-        if (inputs.currentRoute.paths[0] !== gameVersionNames.v1) {
+        if (inputs.currentRoute.paths[0] !== gameVersions.v1) {
             return '';
         } else if (doesRouteNeedSanitization(inputs.currentRoute)) {
             dispatch(
@@ -45,45 +61,46 @@ export const VirForwardGameAppV1 = defineElement<{currentRoute: GameFullRoute}>(
                     sanitized: true,
                 }),
             );
-            return html``;
+            return '';
         }
 
-        const showGame = !!(
-            inputs.currentRoute.paths[1] === V1RoutesEnum.Play && state.selectedDevice
-        );
-
-        if (showGame) {
-            state.inputHandler.pausePollingLoop();
-        } else {
-            state.inputHandler.startPollingLoop();
+        if (!state.gamePipeline) {
+            setTimeout(() => {
+                updateState({
+                    gamePipeline: createForwardGamePipeline({
+                        startImmediately: true,
+                        // delay: {milliseconds: 100},
+                    }),
+                });
+            }, 0);
+            return '';
         }
+
+        const showGame = !!(inputs.currentRoute.paths[1] === V1RoutesEnum.Play);
 
         return html`
+            ${renderIf(
+                state.debug,
+                html`
+                    <${VirStateDebug.assign({
+                        gamePipeline: state.gamePipeline,
+                    })}></${VirStateDebug}>
+                `,
+            )}
             <main
-                ${listen(UpdateGameSettingsEvent, (event) => {
-                    saveGameSettings(event.detail);
-                    updateState({
-                        gameSettings: event.detail,
-                    });
-                })}
                 ${listen(BreakingErrorEvent, (event) => {
                     console.error(event.detail);
                 })}
             >
                 ${showGame
                     ? html`
-                          <${VirGameV1}
-                              ${assign(VirGameV1, {
-                                  gameSettings: state.gameSettings,
-                                  inputHandler: state.inputHandler,
-                                  selectedDevice: state.selectedDevice,
-                              })}
+                          <${VirGameV1.assign({gamePipeline: state.gamePipeline})}
                               ${listen(VirGameV1.events.exit, () => {
                                   dispatch(
                                       new ChangeRouteEvent({
                                           route: {
                                               paths: [
-                                                  gameVersionNames.v1,
+                                                  gameVersions.v1,
                                                   V1RoutesEnum.AssignControls,
                                               ],
                                           },
@@ -91,40 +108,46 @@ export const VirForwardGameAppV1 = defineElement<{currentRoute: GameFullRoute}>(
                                       }),
                                   );
                               })}
+                              ${listen(VirGameV1.events.win, () => {
+                                  state.gamePipeline?.update({
+                                      stateUpdate: {
+                                          haveWon: true,
+                                      },
+                                  });
+                              })}
                           ></${VirGameV1}>
                       `
                     : html`
-                          <${VirAssignControlsV1}
-                              ${assign(VirAssignControlsV1, {
-                                  inputHandler: state.inputHandler,
-                                  gameSettings: state.gameSettings,
-                                  selectedDevice: state.selectedDevice,
-                              })}
+                          <${VirAssignControlsV1.assign({
+                              gamePipeline: state.gamePipeline,
+                              requiredActionNames: getEnumTypedValues(GameAction),
+                          })}
                               ${listen(VirAssignControlsV1.events.assignmentDone, () => {
                                   dispatch(
                                       new ChangeRouteEvent({
                                           route: {
                                               paths: [
-                                                  gameVersionNames.v1,
+                                                  gameVersions.v1,
                                                   V1RoutesEnum.Play,
                                               ],
                                           },
                                           sanitized: false,
                                       }),
                                   );
-                              })}
-                              ${listen(VirAssignControlsV1.events.changeDevice, (event) => {
-                                  const selectedDevice = event.detail;
-                                  updateState({
-                                      selectedDevice: selectedDevice,
+                                  state.gamePipeline?.update({
+                                      stateUpdate: {
+                                          isPaused: false,
+                                          haveWon: false,
+                                          playerPosition: {
+                                              x: 0,
+                                              y: 0,
+                                          },
+                                      },
                                   });
                               })}
                           ></${VirAssignControlsV1}>
                       `}
             </main>
         `;
-    },
-    cleanupCallback({state}) {
-        state.inputHandler.removeAllEventListeners();
     },
 });

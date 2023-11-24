@@ -1,6 +1,11 @@
-import {getObjectTypedValues, isTruthy} from '@augment-vir/common';
+import {areJsonEqual, getObjectTypedValues, isTruthy} from '@augment-vir/common';
 import {GameModule} from 'game-vir';
-import {AllDevices, GamepadDeadZoneSettings, InputDevice} from 'input-device-handler';
+import {
+    AllDevices,
+    AnyInputDeviceKey,
+    GamepadDeadZoneSettings,
+    InputDevice,
+} from 'input-device-handler';
 
 export type CurrentInputsReader = {
     readAllDevices(deadZoneSettings: GamepadDeadZoneSettings): {
@@ -18,14 +23,10 @@ export type CurrentInputsReader = {
     };
 };
 
-export type ExecutionContextForReadingInputs = {
-    inputHandler: CurrentInputsReader;
-};
-
 export type BasicInputDevice = Pick<InputDevice, 'deviceKey' | 'deviceName' | 'deviceType'>;
 
 export type DeviceInput = {
-    deviceKey: string | number;
+    deviceKey: AnyInputDeviceKey;
     inputName: string;
     inputValue: number;
 };
@@ -42,7 +43,12 @@ export const defaultGameStateForReadingInputs: GameStateForReadingInputs = {
     currentInputs: [],
 };
 
-export const readInputs: GameModule<GameStateForReadingInputs, ExecutionContextForReadingInputs> = {
+export const readInputsModule: GameModule<
+    GameStateForReadingInputs,
+    {
+        inputHandler: CurrentInputsReader;
+    }
+> = {
     moduleId: {
         name: 'read inputs',
         version: 1,
@@ -50,19 +56,19 @@ export const readInputs: GameModule<GameStateForReadingInputs, ExecutionContextF
     runModule({executionContext, gameState}) {
         const allDevices = getObjectTypedValues(
             executionContext.inputHandler.readAllDevices(gameState.deadZoneSettings),
-        );
-        const currentDevices = allDevices
-            .filter(isTruthy)
-            .map((currentDevice): BasicInputDevice => {
-                return {
-                    deviceKey: currentDevice.deviceKey,
-                    deviceName: currentDevice.deviceName,
-                    deviceType: currentDevice.deviceType,
-                };
-            });
+        ).filter(isTruthy);
+
+        const currentDevices = allDevices.map((currentDevice): BasicInputDevice => {
+            return {
+                deviceKey: currentDevice.deviceKey,
+                deviceName: currentDevice.deviceName,
+                deviceType: currentDevice.deviceType,
+            };
+        });
+
+        const hasNewDevices = !areJsonEqual(gameState.currentDevices, currentDevices);
 
         const currentInputs: ReadonlyArray<Readonly<DeviceInput>> = allDevices
-            .filter(isTruthy)
             .map((device) =>
                 getObjectTypedValues(device.currentInputs).map((currentInput): DeviceInput => {
                     return {
@@ -74,10 +80,16 @@ export const readInputs: GameModule<GameStateForReadingInputs, ExecutionContextF
             )
             .flat();
 
+        const hasNewInputs = !areJsonEqual(gameState.currentInputs, currentInputs);
+
+        if (!hasNewInputs && !hasNewDevices) {
+            return undefined;
+        }
+
         return {
-            stateChange: {
-                currentDevices,
-                currentInputs,
+            stateUpdate: {
+                ...(hasNewDevices ? {currentDevices} : {}),
+                ...(hasNewInputs ? {currentInputs} : {}),
             },
         };
     },
