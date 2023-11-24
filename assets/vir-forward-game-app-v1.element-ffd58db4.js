@@ -1,4 +1,4 @@
-import{F as y,i as w,a as P,d as k,b as h,c as v,e as b,w as C,h as r,r as f,l as s,g as p,C as d,f as $,V as u,j as S,G as V}from"./index-73b6f2ed.js";var l=(e=>(e.AssignControls="assign-controls",e.Play="play",e))(l||{});const E=[y.V1,"assign-controls"];function x(e){return!w(e.paths,2)||!P(e.paths[1],l)?{...e,paths:E}:e}function z(e){return x(e)!==e}const W=k()("breaking-error"),c=h()({tagName:"vir-game-v1",styles:v`
+import{F as y,i as x,a as k,d as m,c as v,b,w as P,h as r,r as f,l as s,m as C,e as $,g as d,C as p,f as S,V as u,j as V,G as E,s as z}from"./index-a621074d.js";var l=(e=>(e.AssignControls="assign-controls",e.Play="play",e))(l||{});const G=[y.V1,"assign-controls"];function w(e){return!x(e.paths,2)||!k(e.paths[1],l)?{...e,paths:G}:e}function L(e){return w(e)!==e}const c=m()({tagName:"vir-game-v1",styles:v`
         :host {
             height: 100%;
             width: 100%;
@@ -84,8 +84,8 @@ import{F as y,i as w,a as P,d as k,b as h,c as v,e as b,w as C,h as r,r as f,l a
         .exit-button:hover {
             background-color: lightblue;
         }
-    `,stateInitStatic:{cleanup:void 0,playerPosition:{x:0,y:0},isPaused:!1,haveWon:!1},events:{exit:b(),win:b()},initCallback({inputs:e,updateState:i}){e.gamePipeline.addStateListener(!0,["playerPosition"],n=>{i({playerPosition:n})}),e.gamePipeline.addStateListener(!0,["isPaused"],n=>{i({isPaused:n})}),e.gamePipeline.addStateListener(!0,["haveWon"],n=>{i({haveWon:n})})},cleanupCallback({state:e}){var i;(i=e.cleanup)==null||i.call(e)},renderCallback:({state:e,dispatch:i,events:n,host:a})=>{setTimeout(async()=>{await C(),!e.haveWon&&A(a)&&i(new n.win)});const o=e.haveWon||e.isPaused,t=`top: ${e.playerPosition.y}px; left: ${e.playerPosition.x}px`;return r`
-            ${f(o,r`
+    `,stateInitStatic:{cleanup:void 0,playerPosition:{x:0,y:0},isPaused:!1,haveWon:!1},events:{exit:b(),win:b()},initCallback({inputs:e,updateState:i}){e.gamePipeline.addStateListener(!0,["runTime","playerPosition"],n=>{i({playerPosition:n})}),e.gamePipeline.addStateListener(!0,["runTime","isPaused"],n=>{i({isPaused:n})}),e.gamePipeline.addStateListener(!0,["runTime","haveWon"],n=>{i({haveWon:n})})},cleanupCallback({state:e}){var i;(i=e.cleanup)==null||i.call(e)},renderCallback:({state:e,dispatch:i,events:n,host:t})=>{setTimeout(async()=>{await P(),!e.haveWon&&R(t)&&i(new n.win)});const a=e.haveWon||e.isPaused,o=`top: ${e.playerPosition.y}px; left: ${e.playerPosition.x}px`;return r`
+            ${f(a,r`
                     <div class="pause-screen">
                         <div class="pause-background"></div>
                         <div class="pause-info">
@@ -101,11 +101,16 @@ import{F as y,i as w,a as P,d as k,b as h,c as v,e as b,w as C,h as r,r as f,l a
                 `)}
             <div class="victory-location">Get here to win!</div>
             <div class="ship-wrapper">
-                <div class="ship" style=${t}></div>
+                <div class="ship" style=${o}></div>
             </div>
-        `}});function A(e){var t,m;const i=(t=e.shadowRoot)==null?void 0:t.querySelector(".victory-location"),n=(m=e.shadowRoot)==null?void 0:m.querySelector(".ship");if(!i||!n)return!1;const a=i.getBoundingClientRect(),o=n.getBoundingClientRect();return o.left<a.right&&o.right>a.left&&o.top<a.bottom&&o.bottom>a.top}const g=h()({tagName:"vir-state-debug",stateInitStatic:{cleanupCallback:void 0,gameState:void 0},initCallback({inputs:e,updateState:i,state:n}){if(!n.cleanupCallback){const a=e.gamePipeline.addWholeStateListener(!0,o=>{i({gameState:o})});i({cleanupCallback:a})}},cleanupCallback({state:e}){var i;(i=e.cleanupCallback)==null||i.call(e)},renderCallback({state:e}){const i=JSON.stringify(e.gameState,null,4);return r`
-            <pre>${i}</pre>
-        `}}),R=h()({tagName:"vir-forward-game-app-v1",stateInitStatic:{gamePipeline:void 0,debug:!1},styles:v`
+        `}});function R(e){var o,h;const i=(o=e.shadowRoot)==null?void 0:o.querySelector(".victory-location"),n=(h=e.shadowRoot)==null?void 0:h.querySelector(".ship");if(!i||!n)return!1;const t=i.getBoundingClientRect(),a=n.getBoundingClientRect();return a.left<t.right&&a.right>t.left&&a.top<t.bottom&&a.bottom>t.top}const g=m()({tagName:"vir-state-debug-v1",stateInitStatic:{cleanupCallback:void 0,gameState:void 0},initCallback({inputs:e,updateState:i,state:n}){if(!n.cleanupCallback){const t=e.gamePipeline.addWholeStateListener(!0,a=>{i({gameState:a})});i({cleanupCallback:t})}},cleanupCallback({state:e}){var i;(i=e.cleanupCallback)==null||i.call(e)},renderCallback({state:e,inputs:i}){const n=JSON.stringify(e.gameState,null,4);return r`
+            <button
+                ${s("click",()=>{i.gamePipeline.update({stateUpdate:{settings:void 0}}),i.gamePipeline.update({stateUpdate:C($,{runTime:{saveNextFrame:!0}})})})}
+            >
+                Reset Settings
+            </button>
+            <pre>${n}</pre>
+        `}}),W=m()({tagName:"vir-forward-game-app-v1",stateInitStatic:{gamePipeline:void 0,debug:!1,cleanup:void 0},styles:v`
         :host,
         main {
             width: 100%;
@@ -131,22 +136,20 @@ import{F as y,i as w,a as P,d as k,b as h,c as v,e as b,w as C,h as r,r as f,l a
             padding-right: 20px;
             z-index: 999999999;
         }
-    `,cleanupCallback({state:e}){var i;(i=e.gamePipeline)==null||i.destroy()},renderCallback({state:e,updateState:i,inputs:n,dispatch:a}){if(n.currentRoute.paths[0]!==p.v1)return"";if(z(n.currentRoute))return a(new d({route:x(n.currentRoute),sanitized:!0})),"";if(!e.gamePipeline)return setTimeout(()=>{i({gamePipeline:$({startImmediately:!0})})},0),"";const o=n.currentRoute.paths[1]===l.Play;return r`
+    `,initCallback({state:e,updateState:i}){if(!e.cleanup){let n=function(t){(t.key==="D"||t.key==="∂")&&t.altKey&&i({debug:!e.debug})};window.addEventListener("keydown",n),i({cleanup:()=>{window.removeEventListener("keydown",n)}})}},cleanupCallback({state:e}){var i,n;(i=e.cleanup)==null||i.call(e),(n=e.gamePipeline)==null||n.destroy()},renderCallback({state:e,updateState:i,inputs:n,dispatch:t}){if(n.currentRoute.paths[0]!==d.v1)return"";if(L(n.currentRoute))return t(new p({route:w(n.currentRoute),sanitized:!0})),"";if(!e.gamePipeline)return setTimeout(()=>{i({gamePipeline:S({startImmediately:!0})})},0),"";const a=n.currentRoute.paths[1]===l.Play;return r`
             ${f(e.debug,r`
                     <${g.assign({gamePipeline:e.gamePipeline})}></${g}>
                 `)}
-            <main
-                ${s(W,t=>{console.error(t.detail)})}
-            >
-                ${o?r`
+            <main>
+                ${a?r`
                           <${c.assign({gamePipeline:e.gamePipeline})}
-                              ${s(c.events.exit,()=>{a(new d({route:{paths:[p.v1,l.AssignControls]},sanitized:!1}))})}
-                              ${s(c.events.win,()=>{var t;(t=e.gamePipeline)==null||t.update({stateUpdate:{haveWon:!0}})})}
+                              ${s(c.events.exit,()=>{t(new p({route:{paths:[d.v1,l.AssignControls]},sanitized:!1}))})}
+                              ${s(c.events.win,()=>{var o;(o=e.gamePipeline)==null||o.update({stateUpdate:{runTime:{haveWon:!0}}})})}
                           ></${c}>
                       `:r`
-                          <${u.assign({gamePipeline:e.gamePipeline,requiredActionNames:S(V)})}
-                              ${s(u.events.assignmentDone,()=>{var t;a(new d({route:{paths:[p.v1,l.Play]},sanitized:!1})),(t=e.gamePipeline)==null||t.update({stateUpdate:{isPaused:!1,haveWon:!1,playerPosition:{x:0,y:0}}})})}
+                          <${u.assign({gamePipeline:e.gamePipeline,requiredActionNames:V(E)})}
+                              ${s(u.events.assignmentDone,()=>{var o;t(new p({route:{paths:[d.v1,l.Play]},sanitized:!1})),(o=e.gamePipeline)==null||o.update({stateUpdate:z})})}
                           ></${u}>
                       `}
             </main>
-        `}});export{R as VirForwardGameAppV1};
+        `}});export{W as VirForwardGameAppV1};
