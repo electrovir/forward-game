@@ -14,7 +14,7 @@
         "@augment-vir/common": "^22.0.1",
         "element-vir": "17.0.3",
         "game-vir": "^3.0.0",
-        "input-device-handler": "4.2.0",
+        "input-device-handler": "4.2.1",
         "lit-css-vars": "^3.0.7",
         "localforage-esm": "^1.10.2",
         "object-shape-tester": "^1.0.2",
