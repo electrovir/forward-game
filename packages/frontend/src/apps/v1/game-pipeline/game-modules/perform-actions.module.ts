@@ -1,7 +1,7 @@
-import {clamp, isEnumValue, isTruthy, mergeDeep, round} from '@augment-vir/common';
+import {PickDeep, clamp, isEnumValue, isTruthy, mergeDeep, round} from '@augment-vir/common';
 import {GameModule} from 'game-vir';
 import {PartialDeep} from 'type-fest';
-import {BindingDirectionEnum, GameStateForMappingInputs} from './map-to-actions.module';
+import {GameStateForMappingInputs} from './map-to-actions.module';
 
 export enum GameAction {
     Up = 'up',
@@ -11,7 +11,10 @@ export enum GameAction {
     Pause = 'pause',
 }
 
-export type GameStateForActions = GameStateForMappingInputs & {
+export type GameStateForActions = PickDeep<
+    GameStateForMappingInputs,
+    ['runTime', 'currentActions']
+> & {
     runTime: {
         playerPosition: {
             x: number;
@@ -40,39 +43,7 @@ export const performActionsModule: GameModule<GameStateForActions> = {
     },
 };
 
-export const defaultBindings = {
-    keyboard: {
-        'button-w': {
-            [BindingDirectionEnum.Positive]: [GameAction.Up],
-        },
-        'button-s': {
-            [BindingDirectionEnum.Positive]: [GameAction.Down],
-        },
-        'button-a': {
-            [BindingDirectionEnum.Positive]: [GameAction.Left],
-        },
-        'button-d': {
-            [BindingDirectionEnum.Positive]: [GameAction.Right],
-        },
-        'button-Escape': {
-            [BindingDirectionEnum.Positive]: [GameAction.Pause],
-        },
-        'button-ArrowUp': {
-            [BindingDirectionEnum.Positive]: [GameAction.Up],
-        },
-        'button-ArrowDown': {
-            [BindingDirectionEnum.Positive]: [GameAction.Down],
-        },
-        'button-ArrowLeft': {
-            [BindingDirectionEnum.Positive]: [GameAction.Left],
-        },
-        'button-ArrowRight': {
-            [BindingDirectionEnum.Positive]: [GameAction.Right],
-        },
-    },
-};
-
-const movementPerMillisecond = 0.24;
+export const movementPerMillisecond = 0.24;
 
 function calculateNewState(
     gameState: GameStateForActions,
@@ -138,7 +109,7 @@ function calculateNewState(
     }
     const hasMovement = horizontalMovement || verticalMovement;
 
-    const updates: ReadonlyArray<PartialDeep<GameStateForActions>> = [
+    const maybeUpdates: ReadonlyArray<PartialDeep<GameStateForActions> | false | undefined | 0> = [
         !gameState.runTime.isPaused &&
             hasMovement && {
                 runTime: {
@@ -154,8 +125,10 @@ function calculateNewState(
                     },
                 },
             },
-        pauseChange !== undefined && {isPaused: pauseChange},
-    ].filter(isTruthy);
+        pauseChange !== undefined && {runTime: {isPaused: pauseChange}},
+    ];
+
+    const updates = maybeUpdates.filter(isTruthy);
 
     if (!updates.length) {
         return undefined;

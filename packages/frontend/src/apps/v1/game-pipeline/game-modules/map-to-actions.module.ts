@@ -1,4 +1,5 @@
 import {GameModule} from 'game-vir';
+import {GameAction} from './perform-actions.module';
 import {GameStateForReadingInputs} from './read-inputs.module';
 
 export type DeviceKey = string | number;
@@ -7,6 +8,38 @@ export enum BindingDirectionEnum {
     Positive = 'positive',
     Negative = 'negative',
 }
+
+export const defaultBindings = {
+    keyboard: {
+        'button-w': {
+            [BindingDirectionEnum.Positive]: [GameAction.Up],
+        },
+        'button-s': {
+            [BindingDirectionEnum.Positive]: [GameAction.Down],
+        },
+        'button-a': {
+            [BindingDirectionEnum.Positive]: [GameAction.Left],
+        },
+        'button-d': {
+            [BindingDirectionEnum.Positive]: [GameAction.Right],
+        },
+        'button-Escape': {
+            [BindingDirectionEnum.Positive]: [GameAction.Pause],
+        },
+        'button-ArrowUp': {
+            [BindingDirectionEnum.Positive]: [GameAction.Up],
+        },
+        'button-ArrowDown': {
+            [BindingDirectionEnum.Positive]: [GameAction.Down],
+        },
+        'button-ArrowLeft': {
+            [BindingDirectionEnum.Positive]: [GameAction.Left],
+        },
+        'button-ArrowRight': {
+            [BindingDirectionEnum.Positive]: [GameAction.Right],
+        },
+    },
+} as const;
 
 export function determineDirection(value: number): BindingDirectionEnum {
     return value < 0 ? BindingDirectionEnum.Negative : BindingDirectionEnum.Positive;

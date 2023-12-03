@@ -3,8 +3,8 @@ import {GameModule, GamePipeline, ModulesToPipelineStates} from 'game-vir';
 import {InputDeviceHandler} from 'input-device-handler';
 import {PartialDeep} from 'type-fest';
 import {defaultSaveAccess, gameSaveModule} from './game-modules/game-save.module';
-import {mapToActionsModule} from './game-modules/map-to-actions.module';
-import {defaultBindings, performActionsModule} from './game-modules/perform-actions.module';
+import {defaultBindings, mapToActionsModule} from './game-modules/map-to-actions.module';
+import {performActionsModule} from './game-modules/perform-actions.module';
 import {readInputsModule} from './game-modules/read-inputs.module';
 
 const gameModules = [
