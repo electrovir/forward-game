@@ -1,10 +1,6 @@
 import {PickDeep} from '@augment-vir/common';
 import {css, defineElement, defineElementEvent, html, listen} from 'element-vir';
-import {
-    CurrentInputsChangedOutput,
-    InputDeviceEventTypeEnum,
-    TimedEvent,
-} from 'input-device-handler';
+import {DeviceHandlerEventTypeEnum} from 'input-device-handler';
 import {ViraButton} from 'vira';
 import {isIgnoredDevice} from '../../data/v1-ignored-devices';
 import {ForwardGamePipeline, ForwardGameState} from '../../game-pipeline/forward-game-pipeline';
@@ -19,16 +15,7 @@ export const VirAssignControlsV1 = defineElement<{
     requiredActionNames: ReadonlyArray<string>;
     gamePipeline: PickDeep<
         ForwardGamePipeline,
-        [
-            (
-                | 'addStateListener'
-                | 'removeEventListener'
-                | 'update'
-                | 'currentExecutionContext'
-                | 'currentState'
-            ),
-            'inputHandler',
-        ]
+        ['listenToState' | 'update' | 'currentExecutionContext' | 'currentState', 'inputHandler']
     >;
 }>()({
     tagName: 'vir-assign-controls-v1',
@@ -184,92 +171,87 @@ export const VirAssignControlsV1 = defineElement<{
     stateInitStatic: {
         listeningForAction: undefined as undefined | {actionName: string},
         currentInputDevices: [] as ForwardGameState['runTime']['currentDevices'],
-        removeInputListeners: undefined as undefined | (() => void),
+        cleanup: undefined as undefined | (() => void),
         currentBindings: {} as DevicesToActionNameBindings,
     },
-    initCallback: ({inputs, state, updateState}) => {
-        if (!state.removeInputListeners) {
-            function newInputListener(
-                event: TimedEvent<
-                    CurrentInputsChangedOutput,
-                    InputDeviceEventTypeEnum.CurrentInputsChanged
-                >,
-            ) {
-                const newInput = event.detail.inputs.newInputs[0];
-                const actionNameToAssign: string | undefined = state.listeningForAction?.actionName;
+    initCallback({inputs, state, updateState}) {
+        if (!state.cleanup) {
+            const cleanupCallbacks = [
+                /**
+                 * Listen to the CurrentInputsChanged event on the event handler so we don't catch
+                 * any controller inputs that are stuck, which would show up in
+                 * ForwardGameState['currentInputs'].
+                 */
+                inputs.gamePipeline.currentExecutionContext.inputHandler.listen(
+                    DeviceHandlerEventTypeEnum.CurrentInputsChanged,
+                    (event) => {
+                        const newInput = event.detail.inputs.newInputs[0];
+                        const actionNameToAssign: string | undefined =
+                            state.listeningForAction?.actionName;
 
-                if (actionNameToAssign && newInput && !isIgnoredDevice(newInput.deviceKey)) {
-                    updateState({listeningForAction: undefined});
-                    const inputDirection = determineDirection(newInput.inputValue);
-                    const existingActionNames =
-                        inputs.gamePipeline.currentState.settings.actionBindings[
-                            newInput.deviceKey
-                        ]?.[newInput.inputName]?.[inputDirection] ?? [];
+                        if (
+                            actionNameToAssign &&
+                            newInput &&
+                            !isIgnoredDevice(newInput.deviceKey)
+                        ) {
+                            updateState({listeningForAction: undefined});
+                            const inputDirection = determineDirection(newInput.inputValue);
+                            const existingActionNames =
+                                inputs.gamePipeline.currentState.settings.actionBindings[
+                                    newInput.deviceKey
+                                ]?.[newInput.inputName]?.[inputDirection] ?? [];
 
-                    if (existingActionNames.includes(actionNameToAssign)) {
-                        return;
-                    }
+                            if (existingActionNames.includes(actionNameToAssign)) {
+                                return;
+                            }
 
-                    inputs.gamePipeline.update({
-                        stateUpdate: {
-                            runTime: {
-                                saveNextFrame: true,
-                            },
-                            settings: {
-                                actionBindings: {
-                                    [newInput.deviceKey]: {
-                                        [newInput.inputName]: {
-                                            [inputDirection]: [
-                                                ...existingActionNames,
-                                                actionNameToAssign,
-                                            ],
+                            inputs.gamePipeline.update({
+                                stateUpdate: {
+                                    runTime: {
+                                        saveNextFrame: true,
+                                    },
+                                    settings: {
+                                        actionBindings: {
+                                            [newInput.deviceKey]: {
+                                                [newInput.inputName]: {
+                                                    [inputDirection]: [
+                                                        ...existingActionNames,
+                                                        actionNameToAssign,
+                                                    ],
+                                                },
+                                            },
                                         },
                                     },
                                 },
-                            },
-                        },
-                    });
-                }
-            }
-
-            /**
-             * Listen to the CurrentInputsChanged event on the event handler so we don't catch any
-             * controller inputs that are stuck, which would show up in
-             * ForwardGameState['currentInputs'].
-             */
-            inputs.gamePipeline.currentExecutionContext.inputHandler.addEventListener(
-                InputDeviceEventTypeEnum.CurrentInputsChanged,
-                newInputListener,
-            );
-            const removeDeviceStateListener = inputs.gamePipeline.addStateListener(
-                true,
-                [
-                    'runTime',
-                    'currentDevices',
-                ],
-                (newValue) => {
-                    updateState({currentInputDevices: newValue});
-                },
-            );
-            const removeBindingsStateListener = inputs.gamePipeline.addStateListener(
-                true,
-                [
-                    'settings',
-                    'actionBindings',
-                ],
-                (newValue) => {
-                    updateState({currentBindings: newValue});
-                },
-            );
+                            });
+                        }
+                    },
+                ),
+                inputs.gamePipeline.listenToState(
+                    true,
+                    [
+                        'runTime',
+                        'currentDevices',
+                    ],
+                    (newValue) => {
+                        updateState({currentInputDevices: newValue});
+                    },
+                ),
+                inputs.gamePipeline.listenToState(
+                    true,
+                    [
+                        'settings',
+                        'actionBindings',
+                    ],
+                    (newValue) => {
+                        updateState({currentBindings: newValue});
+                    },
+                ),
+            ];
 
             updateState({
-                removeInputListeners: () => {
-                    inputs.gamePipeline.currentExecutionContext.inputHandler.removeEventListener(
-                        InputDeviceEventTypeEnum.CurrentInputsChanged,
-                        newInputListener,
-                    );
-                    removeDeviceStateListener();
-                    removeBindingsStateListener();
+                cleanup: () => {
+                    cleanupCallbacks.forEach((cleanupCallback) => cleanupCallback());
                 },
             });
         }

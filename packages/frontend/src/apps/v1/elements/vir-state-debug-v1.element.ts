@@ -1,5 +1,6 @@
 import {mergeDeep} from '@augment-vir/common';
 import {defineElement, html, listen} from 'element-vir';
+import {WholeGameStateChangeEvent} from 'game-vir';
 import {
     ForwardGamePipeline,
     ForwardGameState,
@@ -14,9 +15,12 @@ export const VirStateDebugV1 = defineElement<{gamePipeline: ForwardGamePipeline}
     },
     initCallback({inputs, updateState, state}) {
         if (!state.cleanupCallback) {
-            const cleanupCallback = inputs.gamePipeline.addWholeStateListener(true, (gameState) => {
-                updateState({gameState});
-            });
+            const cleanupCallback = inputs.gamePipeline.listen(
+                WholeGameStateChangeEvent,
+                (event) => {
+                    updateState({gameState: event.detail});
+                },
+            );
             updateState({
                 cleanupCallback,
             });

@@ -1,11 +1,9 @@
 import {css, defineElement, html} from 'element-vir';
 import {
     AnyInputDeviceKey,
-    CurrentInputsChangedOutput,
-    InputDeviceEventTypeEnum,
+    DeviceHandlerEventTypeEnum,
     InputDeviceHandler,
     InputDeviceTypeEnum,
-    TimedEvent,
     deviceKeyToDeviceType,
 } from 'input-device-handler';
 import {DeviceKey} from '../../game-pipeline/game-modules/map-to-actions.module';
@@ -38,7 +36,7 @@ export const VirDeviceDisplayV1 = defineElement<{
     animated: boolean;
     size: DeviceSizeEnum;
     displayShortKey: boolean;
-    inputHandler: Pick<InputDeviceHandler, 'addEventListener' | 'removeEventListener'> | undefined;
+    inputHandler: Pick<InputDeviceHandler, 'listen'> | undefined;
 }>()({
     tagName: 'vir-device-display-v1',
     hostClasses: {
@@ -58,47 +56,35 @@ export const VirDeviceDisplayV1 = defineElement<{
     `,
     initCallback({inputs, state, updateState}) {
         const inputHandler = inputs.inputHandler;
-        if (!state.removeListeners && inputHandler && inputs.animated) {
-            function newInputListener(
-                event: TimedEvent<
-                    CurrentInputsChangedOutput,
-                    InputDeviceEventTypeEnum.CurrentInputsChanged
-                >,
-            ) {
-                const hasNewInputsForDevice = event.detail.inputs.newInputs.some(
-                    (inputValue) => inputValue.deviceKey === inputs.deviceKey,
-                );
 
-                if (hasNewInputsForDevice) {
-                    updateState({
-                        animation: {
-                            timestamp: Date.now(),
-                        },
-                    });
-                }
-            }
-
-            inputHandler.addEventListener(
-                InputDeviceEventTypeEnum.CurrentInputsChanged,
-                newInputListener,
-            );
-
+        if (!state.cleanup && inputHandler && inputs.animated) {
             updateState({
-                removeListeners() {
-                    inputHandler.removeEventListener(
-                        InputDeviceEventTypeEnum.CurrentInputsChanged,
-                        newInputListener,
-                    );
-                },
+                cleanup: inputHandler.listen(
+                    DeviceHandlerEventTypeEnum.CurrentInputsChanged,
+                    (event) => {
+                        const hasNewInputsForDevice = event.detail.inputs.newInputs.some(
+                            (inputValue) => inputValue.deviceKey === inputs.deviceKey,
+                        );
+
+                        if (hasNewInputsForDevice) {
+                            updateState({
+                                animation: {
+                                    timestamp: Date.now(),
+                                },
+                            });
+                        }
+                    },
+                ),
             });
         }
     },
     stateInitStatic: {
         animation: undefined as undefined | Readonly<Animation>,
-        removeListeners: undefined as undefined | (() => void),
+        cleanup: undefined as undefined | (() => void),
     },
-    cleanupCallback({state}) {
-        state.removeListeners?.();
+    cleanupCallback({state, updateState}) {
+        state.cleanup?.();
+        updateState({cleanup: undefined});
     },
     renderCallback({inputs, state}) {
         const emojiKey: keyof typeof deviceEmojis =

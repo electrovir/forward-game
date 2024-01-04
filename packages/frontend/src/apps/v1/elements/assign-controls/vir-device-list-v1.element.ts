@@ -24,7 +24,7 @@ export function sortDevices(
 export const VirDeviceListV1 = defineElement<{
     devices: CurrentDevices;
     showAnimations: boolean;
-    inputHandler: Pick<InputDeviceHandler, 'addEventListener' | 'removeEventListener'>;
+    inputHandler: Pick<InputDeviceHandler, 'listen'>;
 }>()({
     tagName: 'vir-device-list-v1',
     styles: css`

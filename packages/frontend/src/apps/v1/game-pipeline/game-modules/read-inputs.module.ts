@@ -2,13 +2,13 @@ import {areJsonEqual, getObjectTypedValues, isTruthy} from '@augment-vir/common'
 import {GameModule} from 'game-vir';
 import {
     AllDevices,
+    AllGamepadDeadZoneSettings,
     AnyInputDeviceKey,
-    GamepadDeadZoneSettings,
     InputDevice,
 } from 'input-device-handler';
 
 export type CurrentInputsReader = {
-    readAllDevices(deadZoneSettings: GamepadDeadZoneSettings): {
+    readAllDevices(deadZoneSettings: AllGamepadDeadZoneSettings): {
         [DeviceKey in keyof AllDevices]: Pick<
             NonNullable<AllDevices[DeviceKey]>,
             'deviceKey' | 'deviceName' | 'deviceType'
@@ -39,7 +39,7 @@ export type GameStateForReadingInputs = {
         currentInputs: ReadonlyArray<Readonly<DeviceInput>>;
     };
     settings: {
-        deadZoneSettings: GamepadDeadZoneSettings;
+        deadZoneSettings: AllGamepadDeadZoneSettings;
     };
 };
 

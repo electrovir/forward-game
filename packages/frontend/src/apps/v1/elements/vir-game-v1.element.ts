@@ -105,7 +105,7 @@ export const VirGameV1 = defineElement<{gamePipeline: ForwardGamePipeline}>()({
         win: defineElementEvent<void>(),
     },
     initCallback({inputs, updateState}) {
-        inputs.gamePipeline.addStateListener(
+        inputs.gamePipeline.listenToState(
             true,
             [
                 'runTime',
@@ -115,7 +115,7 @@ export const VirGameV1 = defineElement<{gamePipeline: ForwardGamePipeline}>()({
                 updateState({playerPosition});
             },
         );
-        inputs.gamePipeline.addStateListener(
+        inputs.gamePipeline.listenToState(
             true,
             [
                 'runTime',
@@ -125,7 +125,7 @@ export const VirGameV1 = defineElement<{gamePipeline: ForwardGamePipeline}>()({
                 updateState({isPaused});
             },
         );
-        inputs.gamePipeline.addStateListener(
+        inputs.gamePipeline.listenToState(
             true,
             [
                 'runTime',
