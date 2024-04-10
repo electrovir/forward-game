@@ -1,5 +1,5 @@
 {
-    "name": "@electrovir/forward-game-root",
+    "name": "forward-game",
     "private": true,
     "homepage": "https://github.com/electrovir/forward-game",
     "bugs": {
@@ -14,31 +14,50 @@
         "name": "electrovir",
         "url": "https://github.com/electrovir"
     },
-    "workspaces": [
-        "./packages/*"
-    ],
     "scripts": {
-        "build": "npm run --workspace @electrovir/forward-game-frontend build",
+        "build": "virmator frontend build",
         "format": "virmator format",
-        "preview": "npm run --workspace @electrovir/forward-game-frontend preview",
-        "regenerate-deps": "rm -rf node_modules && rm -rf packages/*/node_modules && rm -f package-lock.json && npm i",
-        "start": "npm run --workspace @electrovir/forward-game-frontend start",
-        "test": "mono-vir for-each-async npm test",
-        "test:all": "concurrently --colors --kill-others-on-fail -c auto --names types,tests,spelling,format,build \"npm run test:types\" \"npm run test\" \"npm run test:spelling\" \"npm run test:format\" \"npm run build\"",
+        "preview": "virmator frontend preview",
+        "publish": "virmator publish \"npm run compile && npm run test:all\"",
+        "start": "virmator frontend",
+        "test": "virmator test-web",
+        "test:all": "concurrently --colors --kill-others-on-fail -c auto --names types,tests,spelling,format,deps \"npm run test:types\" \"npm run test:coverage\" \"npm run test:spelling\" \"npm run test:format\" \"npm run test:deps\"",
+        "test:coverage": "npm run test coverage",
         "test:deps": "virmator deps check",
         "test:format": "virmator format check",
         "test:spelling": "virmator spellcheck",
-        "test:types": "mono-vir for-each-async tsc --noEmit"
+        "test:types": "tsc --noEmit"
     },
     "dependencies": {
-        "element-book": "^22.0.5"
+        "@augment-vir/browser": "^26.3.1",
+        "@augment-vir/common": "^26.3.1",
+        "element-vir": "22.0.5",
+        "game-vir": "^4.0.1",
+        "gamepad-type": "^1.0.0",
+        "input-device-handler": "5.1.0",
+        "lit-css-vars": "^3.0.9",
+        "localforage-esm": "^1.10.2",
+        "object-shape-tester": "^2.3.2",
+        "run-time-assertions": "^1.2.0",
+        "spa-router-vir": "^3.0.4",
+        "type-fest": "^4.15.0",
+        "vira": "^22.0.5"
     },
     "devDependencies": {
-        "concurrently": "^8.2.2",
+        "@augment-vir/browser-testing": "^26.3.1",
+        "@augment-vir/node-js": "^26.3.1",
+        "@open-wc/testing": "4.0.0",
+        "@types/mocha": "^10.0.6",
+        "@web/dev-server-esbuild": "^1.0.2",
+        "@web/test-runner": "^0.18.1",
+        "@web/test-runner-commands": "^0.9.0",
+        "@web/test-runner-playwright": "^0.11.0",
+        "@web/test-runner-visual-regression": "^0.9.0",
         "cspell": "^8.6.1",
         "dependency-cruiser": "^16.3.0",
+        "element-book": "^22.0.5",
         "esbuild": "^0.20.2",
-        "mono-vir": "^1.0.0",
+        "istanbul-smart-text-reporter": "^1.1.4",
         "npm-check-updates": "~16.12.3",
         "prettier": "^3.2.5",
         "prettier-plugin-interpolated-html-tags": "^1.0.5",
@@ -48,10 +67,9 @@
         "prettier-plugin-packagejson": "^2.4.14",
         "prettier-plugin-sort-json": "^4.0.0",
         "prettier-plugin-toml": "^2.0.1",
-        "typescript": "5.4.4",
-        "virmator": "11.5.2"
-    },
-    "overrides": {
-        "semver": "^7.5.3"
+        "typescript": "5.3.3",
+        "virmator": "^11.5.2",
+        "vite": "^4.5.0",
+        "vite-tsconfig-paths": "^4.3.2"
     }
 }
