@@ -1,7 +1,7 @@
 import {defineBookPage} from 'element-book';
 import {html} from 'element-vir';
-import {gamepadInputDeviceKey} from 'input-device-handler';
-import {BindingDirectionEnum} from '../../game-pipeline/game-modules/map-to-actions.module';
+import {InputDeviceTypeEnum} from 'input-device-handler';
+import {BindingDirectionEnum} from '../../game-pipeline/game-modules/inputs/action-binding';
 import {VirBindingsTableV1} from './vir-bindings-table-v1.element';
 
 export const actionBindingsV1Page = defineBookPage({
@@ -13,7 +13,12 @@ export const actionBindingsV1Page = defineBookPage({
             renderCallback() {
                 return html`
                     <${VirBindingsTableV1.assign({
-                        bindings: {},
+                        bindingGroup: {
+                            bindings: [],
+                            isDefault: false,
+                            name: 'Example 1',
+                        },
+                        showBindingsForUnconnectedGamepads: true,
                         requiredActionNames: [
                             'cut tree',
                             'eat food',
@@ -31,33 +36,43 @@ export const actionBindingsV1Page = defineBookPage({
             renderCallback() {
                 return html`
                     <${VirBindingsTableV1.assign({
-                        bindings: {
-                            [gamepadInputDeviceKey.gamepad1]: {
-                                'button-1': {
-                                    [BindingDirectionEnum.Positive]: [
-                                        'cut tree',
-                                    ],
+                        showBindingsForUnconnectedGamepads: true,
+                        bindingGroup: {
+                            bindings: [
+                                {
+                                    deviceType: InputDeviceTypeEnum.Gamepad,
+                                    actionName: 'cut tree',
+                                    direction: BindingDirectionEnum.Positive,
+                                    gamepadLayoutInputName: undefined,
+                                    gamepadModelName: undefined,
+                                    gamepadName: '',
+                                    inputName: 'button-1',
+                                    inputPlayerIndex: 0,
                                 },
-                            },
-                            keyboard: {
-                                'button-long-button-name': {
-                                    [BindingDirectionEnum.Positive]: [
-                                        'cut tree',
-                                    ],
+                                {
+                                    deviceType: InputDeviceTypeEnum.Keyboard,
+                                    actionName: 'cut tree',
+                                    deviceKey: 'keyboard',
+                                    direction: BindingDirectionEnum.Positive,
+                                    inputName: 'button-long-button-name',
                                 },
-                            },
-                            mouse: {
-                                'button-0': {
-                                    [BindingDirectionEnum.Positive]: [
-                                        'move',
-                                    ],
+                                {
+                                    deviceType: InputDeviceTypeEnum.Mouse,
+                                    actionName: 'move',
+                                    deviceKey: 'mouse',
+                                    direction: BindingDirectionEnum.Positive,
+                                    inputName: 'button-0',
                                 },
-                                'button-1': {
-                                    [BindingDirectionEnum.Positive]: [
-                                        'ignored-action',
-                                    ],
+                                {
+                                    deviceType: InputDeviceTypeEnum.Mouse,
+                                    actionName: 'ignored-action',
+                                    deviceKey: 'mouse',
+                                    direction: BindingDirectionEnum.Positive,
+                                    inputName: 'button-1',
                                 },
-                            },
+                            ],
+                            isDefault: false,
+                            name: 'Example 2',
                         },
                         requiredActionNames: [
                             'cut tree',

@@ -3,13 +3,14 @@ import {GameModule, GamePipeline, ModulesToPipelineStates} from 'game-vir';
 import {InputDeviceHandler} from 'input-device-handler';
 import {PartialDeep} from 'type-fest';
 import {defaultSaveAccess, gameSaveModule} from './game-modules/game-save.module';
-import {defaultBindings, mapToActionsModule} from './game-modules/map-to-actions.module';
-import {performActionsModule} from './game-modules/perform-actions.module';
-import {readInputsModule} from './game-modules/read-inputs.module';
+import {defaultBindingSets} from './game-modules/inputs/default-binding-sets';
+import {mapInputsToActionsModule} from './game-modules/inputs/map-inputs-to-actions.module';
+import {performActionsModule} from './game-modules/inputs/perform-actions.module';
+import {readInputsModule} from './game-modules/inputs/read-inputs.module';
 
 const gameModules = [
     readInputsModule,
-    mapToActionsModule,
+    mapInputsToActionsModule,
     performActionsModule,
     gameSaveModule,
 ] as const satisfies ReadonlyArray<GameModule<any, any>>;
@@ -20,7 +21,7 @@ export type ForwardGameExecutionContext = ModulesToPipelineStates<
     typeof gameModules
 >['executionContext'];
 
-export const startNewRunGameState = {
+export const startNewSessionGameState = {
     runTime: {
         isPaused: false,
         haveWon: false,
@@ -28,35 +29,47 @@ export const startNewRunGameState = {
             x: 0,
             y: 0,
         },
+        /**
+         * This is in the new session state because it will potentially be checked with each new
+         * session.
+         */
+        gamepadPlayerMapping: [],
     },
 } as const satisfies Readonly<PartialDeep<ForwardGameState>>;
 
-export const resetToDefaultsGameState = {
+export const InitSettings = {
     settings: {
         deadZoneSettings: {},
-        actionBindings: defaultBindings,
+        actionBindingGroups: defaultBindingSets,
         saveInterval: {
-            milliseconds: 10000,
+            milliseconds: 10_000,
         },
+        customGamepadLayouts: [],
+        customGamepadModelMap: {},
+        selectedBindingGroups: [],
+    },
+} satisfies Readonly<PartialDeep<ForwardGameState>>;
+
+const leftoverStartingGameState = {
+    runTime: {
+        currentActions: [],
+        saveNextFrame: false,
+        initialLoadAttempted: false,
+        lastTimeSaved: {
+            milliseconds: Date.now(),
+        },
+        currentDevices: {},
+        currentInputs: [],
     },
 } as const satisfies Readonly<PartialDeep<ForwardGameState>>;
 
-const startingGameState = mergeDeep<ForwardGameState>(
-    resetToDefaultsGameState,
-    startNewRunGameState,
-    {
-        runTime: {
-            currentActions: [],
-            saveNextFrame: false,
-            initialLoadAttempted: false,
-            lastTimeSaved: {
-                milliseconds: Date.now(),
-            },
-            currentDevices: [],
-            currentInputs: [],
-        },
-    },
-);
+export const startingGameStatePieces = [
+    InitSettings,
+    startNewSessionGameState,
+    leftoverStartingGameState,
+] as const;
+
+const startingGameState = mergeDeep<ForwardGameState>(...startingGameStatePieces);
 
 export function createForwardGamePipeline({
     startImmediately,

@@ -1,62 +1,43 @@
-import {getObjectTypedKeys, isTruthy} from '@augment-vir/common';
+import {getOrSet, isTruthy} from '@augment-vir/common';
 import {classMap, css, defineElement, defineElementEvent, html, listen} from 'element-vir';
 import {viraAnimationDurations} from 'vira';
-import {DevicesToActionNameBindings} from '../../game-pipeline/game-modules/map-to-actions.module';
-import {ActionBinding, VirSingleBindingV1, minBindingHeight} from './vir-single-binding-v1.element';
+import {
+    ActionBinding,
+    ActionBindingGroup,
+} from '../../game-pipeline/game-modules/inputs/action-binding';
+import {VirSingleBindingV1, minBindingHeight} from './vir-single-binding-v1.element';
 
-export type ActionToBindings = {
+export type ActionNamesToBindings = {
     [actionName: string]: ActionBinding[];
 };
 
 type CurrentAssignments = Readonly<{
+    bindingGroup: ActionBindingGroup;
     requiredActionNames: ReadonlyArray<string>;
-    bindings: Readonly<DevicesToActionNameBindings>;
+    showBindingsForUnconnectedGamepads: boolean;
 }>;
 
 function currentActionToBindings({
     requiredActionNames,
-    bindings,
-}: CurrentAssignments): Partial<ActionToBindings> {
-    const actionToBindings: ActionToBindings = Object.fromEntries(
+    bindingGroup,
+}: CurrentAssignments): Partial<ActionNamesToBindings> {
+    const actionNamesToBindings: ActionNamesToBindings = Object.fromEntries(
         requiredActionNames.map((actionName) => [
             actionName,
             [],
         ]),
     );
 
-    getObjectTypedKeys(bindings).forEach((deviceKey) => {
-        const deviceBindings = bindings[deviceKey];
-        if (!deviceBindings) {
-            return;
-        }
-
-        Object.keys(deviceBindings).forEach((inputName) => {
-            const inputBindings = deviceBindings[inputName];
-            if (!inputBindings) {
-                return;
-            }
-
-            getObjectTypedKeys(inputBindings).forEach((direction) => {
-                try {
-                    const boundActionNames = inputBindings[direction];
-                    if (!boundActionNames) {
-                        return;
-                    }
-                    boundActionNames.forEach((boundActionName) => {
-                        const actionNameBindings = actionToBindings[boundActionName];
-                        if (actionNameBindings) {
-                            actionNameBindings.push({deviceKey, direction, inputName});
-                        }
-                    });
-                } catch (error) {
-                    debugger;
-                    throw error;
-                }
-            });
-        });
+    bindingGroup.bindings.forEach((binding) => {
+        const bindingsForCurrentAction = getOrSet(
+            actionNamesToBindings,
+            binding.actionName,
+            () => [],
+        );
+        bindingsForCurrentAction.push(binding);
     });
 
-    return actionToBindings;
+    return actionNamesToBindings;
 }
 
 export const VirBindingsTableV1 = defineElement<CurrentAssignments>()({
@@ -110,7 +91,7 @@ export const VirBindingsTableV1 = defineElement<CurrentAssignments>()({
         }
     `,
     events: {
-        removeBinding: defineElementEvent<ActionBinding & {actionName: string}>(),
+        removeBinding: defineElementEvent<ActionBinding>(),
         listenForAction: defineElementEvent<{actionName: string}>(),
     },
     renderCallback({inputs, dispatch, events}) {
@@ -123,17 +104,12 @@ export const VirBindingsTableV1 = defineElement<CurrentAssignments>()({
             ].map(
                 (assignment) => html`
                     <${VirSingleBindingV1.assign({
-                        binding: assignment,
+                        actionBinding: assignment,
                     })}
                         class=${classMap({'add-binding': !assignment})}
                         ${listen('click', () => {
                             if (assignment) {
-                                dispatch(
-                                    new events.removeBinding({
-                                        actionName,
-                                        ...assignment,
-                                    }),
-                                );
+                                dispatch(new events.removeBinding(assignment));
                             } else {
                                 dispatch(
                                     new events.listenForAction({

@@ -1,21 +1,13 @@
 import {classMap, css, defineElement, html, renderIf} from 'element-vir';
+import {InputDeviceTypeEnum} from 'input-device-handler';
 import {noNativeFormStyles, viraAnimationDurations} from 'vira';
-import {
-    BindingDirectionEnum,
-    DeviceKey,
-} from '../../game-pipeline/game-modules/map-to-actions.module';
+import {ActionBinding} from '../../game-pipeline/game-modules/inputs/action-binding';
 import {DeviceSizeEnum, VirDeviceDisplayV1} from './vir-device-display-v1.element';
 
 export const minBindingHeight = 52;
 
-export type ActionBinding = {
-    deviceKey: DeviceKey;
-    inputName: string;
-    direction: BindingDirectionEnum;
-};
-
 export const VirSingleBindingV1 = defineElement<{
-    binding: ActionBinding | undefined;
+    actionBinding: ActionBinding | undefined;
 }>()({
     tagName: 'vir-single-binding-v1',
     styles: css`
@@ -72,30 +64,41 @@ export const VirSingleBindingV1 = defineElement<{
         }
     `,
     renderCallback({inputs}) {
-        const displayName = inputs.binding?.inputName;
+        const displayName = inputs.actionBinding?.inputName;
+        const deviceKey =
+            inputs.actionBinding?.deviceType === InputDeviceTypeEnum.Gamepad
+                ? undefined
+                : inputs.actionBinding?.deviceKey;
+        const inputPlayerIndex =
+            inputs.actionBinding?.deviceType === InputDeviceTypeEnum.Gamepad
+                ? inputs.actionBinding.inputPlayerIndex
+                : undefined;
 
         return html`
             <button
                 class=${classMap({
-                    'has-binding': !!inputs.binding,
+                    'has-binding': !!inputs.actionBinding,
                 })}
             >
                 <span class="device-icon">
                     <${VirDeviceDisplayV1.assign({
                         animated: false,
-                        deviceKey: inputs.binding?.deviceKey,
+                        deviceKey,
+                        inputPlayerIndex,
                         inputHandler: undefined,
                         displayShortKey: true,
                         size: DeviceSizeEnum.Inline,
                     })}></${VirDeviceDisplayV1}>
                 </span>
-                ${displayName == undefined
-                    ? ''
-                    : html`
-                          <span class="input-name">${displayName}</span>
-                      `}
+                ${
+                    displayName == undefined
+                        ? ''
+                        : html`
+                              <span class="input-name">${displayName}</span>
+                          `
+                }
                 ${renderIf(
-                    !!inputs.binding,
+                    !!inputs.actionBinding,
                     html`
                         <div class="delete-message"><span>Delete</span></div>
                     `,

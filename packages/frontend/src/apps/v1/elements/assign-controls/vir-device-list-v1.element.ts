@@ -4,7 +4,7 @@ import {isIgnoredDevice} from '../../data/v1-ignored-devices';
 import {
     BasicInputDevice,
     CurrentDevices,
-} from '../../game-pipeline/game-modules/read-inputs.module';
+} from '../../game-pipeline/game-modules/inputs/read-inputs.module';
 import {DeviceSizeEnum, VirDeviceDisplayV1} from './vir-device-display-v1.element';
 
 export function sortDevices(
@@ -34,7 +34,7 @@ export const VirDeviceListV1 = defineElement<{
         }
     `,
     renderCallback({inputs}) {
-        const sortedDevices = sortDevices(inputs.devices);
+        const sortedDevices = sortDevices(Object.values(inputs.devices));
 
         const deviceDisplay = sortedDevices.map((device) => {
             return html`
@@ -44,6 +44,7 @@ export const VirDeviceListV1 = defineElement<{
                     displayShortKey: false,
                     size: DeviceSizeEnum.Large,
                     inputHandler: inputs.inputHandler,
+                    inputPlayerIndex: 0,
                 })}></${VirDeviceDisplayV1}>
             `;
         });

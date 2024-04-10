@@ -1,13 +1,18 @@
-import {PickDeep} from '@augment-vir/common';
+import {PickDeep, areJsonEqual} from '@augment-vir/common';
 import {css, defineElement, defineElementEvent, html, listen} from 'element-vir';
-import {DeviceHandlerEventTypeEnum} from 'input-device-handler';
+import {DeviceHandlerEventTypeEnum, InputDeviceTypeEnum} from 'input-device-handler';
 import {ViraButton} from 'vira';
 import {isIgnoredDevice} from '../../data/v1-ignored-devices';
 import {ForwardGamePipeline, ForwardGameState} from '../../game-pipeline/forward-game-pipeline';
 import {
-    DevicesToActionNameBindings,
+    ActionBinding,
+    ActionBindingGroup,
+} from '../../game-pipeline/game-modules/inputs/action-binding';
+import {defaultBindingSets} from '../../game-pipeline/game-modules/inputs/default-binding-sets';
+import {
     determineDirection,
-} from '../../game-pipeline/game-modules/map-to-actions.module';
+    getMappedPlayerIndexForDevice,
+} from '../../game-pipeline/game-modules/inputs/map-inputs-to-actions.module';
 import {VirBindingsTableV1} from './vir-bindings-table-v1.element';
 import {VirDeviceListV1} from './vir-device-list-v1.element';
 
@@ -172,36 +177,84 @@ export const VirAssignControlsV1 = defineElement<{
         listeningForAction: undefined as undefined | {actionName: string},
         currentInputDevices: [] as ForwardGameState['runTime']['currentDevices'],
         cleanup: undefined as undefined | (() => void),
-        currentBindings: {} as DevicesToActionNameBindings,
+        selectedActionBindingGroupName: defaultBindingSets.default.name,
     },
     initCallback({inputs, state, updateState}) {
         if (!state.cleanup) {
             const cleanupCallbacks = [
                 /**
-                 * Listen to the CurrentInputsChanged event on the event handler so we don't catch
+                 * Listen to the `CurrentInputsChanged` event on the event handler so we don't catch
                  * any controller inputs that are stuck, which would show up in
-                 * ForwardGameState['currentInputs'].
+                 * `ForwardGameState['currentInputs']`.
                  */
                 inputs.gamePipeline.currentExecutionContext.inputHandler.listen(
                     DeviceHandlerEventTypeEnum.CurrentInputsChanged,
                     (event) => {
-                        const newInput = event.detail.inputs.newInputs[0];
+                        const selectedBindingGroup: ActionBindingGroup =
+                            inputs.gamePipeline.currentState.settings.actionBindingGroups[
+                                state.selectedActionBindingGroupName
+                            ] ?? defaultBindingSets.default;
+                        const newInput = event.detail.inputs.newInputs.sort(
+                            (a, b) => a.inputValue - b.inputValue,
+                        )[0];
                         const actionNameToAssign: string | undefined =
                             state.listeningForAction?.actionName;
 
                         if (
                             actionNameToAssign &&
                             newInput &&
-                            !isIgnoredDevice(newInput.deviceKey)
+                            !isIgnoredDevice(newInput.deviceKey) &&
+                            !selectedBindingGroup.isDefault
                         ) {
+                            const currentDevice =
+                                inputs.gamePipeline.currentState.runTime.currentDevices[
+                                    newInput.deviceKey
+                                ];
+
+                            if (!currentDevice) {
+                                throw new Error(
+                                    `Got an input from device '${newInput.deviceKey}' but no device existed at that key.`,
+                                );
+                            }
+
+                            const inputPlayerIndex: number = getMappedPlayerIndexForDevice(
+                                currentDevice,
+                                inputs.gamePipeline.currentState.runTime.gamepadPlayerMapping,
+                            );
+
                             updateState({listeningForAction: undefined});
                             const inputDirection = determineDirection(newInput.inputValue);
-                            const existingActionNames =
-                                inputs.gamePipeline.currentState.settings.actionBindings[
-                                    newInput.deviceKey
-                                ]?.[newInput.inputName]?.[inputDirection] ?? [];
+                            const newActionBinding: ActionBinding =
+                                currentDevice.deviceType === InputDeviceTypeEnum.Gamepad
+                                    ? {
+                                          actionName: actionNameToAssign,
+                                          deviceType: currentDevice.deviceType,
+                                          direction: inputDirection,
+                                          gamepadLayoutInputName:
+                                              currentDevice.gamepadLayout?.inputMappings?.[
+                                                  newInput.inputName
+                                              ],
+                                          gamepadModelName: currentDevice.gamepadModel,
+                                          gamepadName: currentDevice.deviceName,
+                                          inputName: newInput.inputName,
+                                          inputPlayerIndex,
+                                      }
+                                    : {
+                                          actionName: actionNameToAssign,
+                                          deviceKey: currentDevice.deviceKey,
+                                          deviceType: currentDevice.deviceType,
+                                          direction: inputDirection,
+                                          inputName: newInput.inputName,
+                                          inputPlayerIndex,
+                                      };
+                            const existingBinding = selectedBindingGroup.bindings.find(
+                                (binding) => {
+                                    return areJsonEqual(newActionBinding, binding);
+                                },
+                            );
 
-                            if (existingActionNames.includes(actionNameToAssign)) {
+                            /** Nothing to do because the new binding already exactly exists. */
+                            if (existingBinding) {
                                 return;
                             }
 
@@ -211,14 +264,12 @@ export const VirAssignControlsV1 = defineElement<{
                                         saveNextFrame: true,
                                     },
                                     settings: {
-                                        actionBindings: {
-                                            [newInput.deviceKey]: {
-                                                [newInput.inputName]: {
-                                                    [inputDirection]: [
-                                                        ...existingActionNames,
-                                                        actionNameToAssign,
-                                                    ],
-                                                },
+                                        actionBindingGroups: {
+                                            [state.selectedActionBindingGroupName]: {
+                                                bindings:
+                                                    selectedBindingGroup.bindings.concat(
+                                                        newActionBinding,
+                                                    ),
                                             },
                                         },
                                     },
@@ -237,16 +288,16 @@ export const VirAssignControlsV1 = defineElement<{
                         updateState({currentInputDevices: newValue});
                     },
                 ),
-                inputs.gamePipeline.listenToState(
-                    true,
-                    [
-                        'settings',
-                        'actionBindings',
-                    ],
-                    (newValue) => {
-                        updateState({currentBindings: newValue});
-                    },
-                ),
+                // inputs.gamePipeline.listenToState(
+                //     true,
+                //     [
+                //         'settings',
+                //         'actionBindings',
+                //     ],
+                //     (newValue) => {
+                //         updateState({currentBindings: newValue});
+                //     },
+                // ),
             ];
 
             updateState({
@@ -265,6 +316,11 @@ export const VirAssignControlsV1 = defineElement<{
               `
             : '';
 
+        const selectedBindingGroup: ActionBindingGroup =
+            inputs.gamePipeline.currentState.settings.actionBindingGroups[
+                state.selectedActionBindingGroupName
+            ] ?? defaultBindingSets.default;
+
         return html`
             ${showListeningForTemplate}
             <header>
@@ -278,21 +334,31 @@ export const VirAssignControlsV1 = defineElement<{
                 inputHandler: inputs.gamePipeline.currentExecutionContext.inputHandler,
             })}></${VirDeviceListV1}>
             <${VirBindingsTableV1.assign({
-                bindings: state.currentBindings,
+                bindingGroup: selectedBindingGroup,
                 requiredActionNames: inputs.requiredActionNames,
+                showBindingsForUnconnectedGamepads: false,
             })}
                 ${listen(VirBindingsTableV1.events.listenForAction, (event) => {
+                    if (selectedBindingGroup.isDefault) {
+                        return;
+                    }
                     updateState({listeningForAction: event.detail});
                 })}
                 ${listen(VirBindingsTableV1.events.removeBinding, (event) => {
-                    const existingActionNames =
-                        inputs.gamePipeline.currentState.settings.actionBindings[
-                            event.detail.deviceKey
-                        ]?.[event.detail.inputName]?.[event.detail.direction] ?? [];
+                    if (selectedBindingGroup.isDefault) {
+                        return;
+                    }
 
-                    const newActionNames = existingActionNames.filter((existingActionName) => {
-                        return existingActionName !== event.detail.actionName;
-                    });
+                    const newActionBindings =
+                        inputs.gamePipeline.currentState.settings.actionBindingGroups[
+                            state.selectedActionBindingGroupName
+                        ]?.bindings?.filter((currentBinding) => {
+                            return !areJsonEqual(currentBinding, event.detail);
+                        });
+
+                    if (!newActionBindings) {
+                        return;
+                    }
 
                     inputs.gamePipeline.update({
                         stateUpdate: {
@@ -300,11 +366,9 @@ export const VirAssignControlsV1 = defineElement<{
                                 saveNextFrame: true,
                             },
                             settings: {
-                                actionBindings: {
-                                    [event.detail.deviceKey]: {
-                                        [event.detail.inputName]: {
-                                            [event.detail.direction]: newActionNames,
-                                        },
+                                actionBindingGroups: {
+                                    [state.selectedActionBindingGroupName]: {
+                                        bindings: newActionBindings,
                                     },
                                 },
                             },

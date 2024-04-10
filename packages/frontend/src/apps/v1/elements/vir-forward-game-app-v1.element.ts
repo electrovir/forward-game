@@ -6,9 +6,9 @@ import {V1RoutesEnum, doesRouteNeedSanitization, sanitizeV1Route} from '../data/
 import {
     ForwardGamePipeline,
     createForwardGamePipeline,
-    startNewRunGameState,
+    startNewSessionGameState,
 } from '../game-pipeline/forward-game-pipeline';
-import {GameAction} from '../game-pipeline/game-modules/perform-actions.module';
+import {ForwardGameAction} from '../game-pipeline/game-modules/inputs/perform-actions.module';
 import {VirAssignControlsV1} from './assign-controls/vir-assign-controls-v1.element';
 import {VirGameV1} from './vir-game-v1.element';
 import {VirStateDebugV1} from './vir-state-debug-v1.element';
@@ -137,7 +137,7 @@ export const VirForwardGameAppV1 = defineElement<{
                     : html`
                           <${VirAssignControlsV1.assign({
                               gamePipeline: state.gamePipeline,
-                              requiredActionNames: getEnumTypedValues(GameAction),
+                              requiredActionNames: getEnumTypedValues(ForwardGameAction),
                           })}
                               ${listen(VirAssignControlsV1.events.assignmentDone, () => {
                                   dispatch(
@@ -152,7 +152,7 @@ export const VirForwardGameAppV1 = defineElement<{
                                       }),
                                   );
                                   state.gamePipeline?.update({
-                                      stateUpdate: startNewRunGameState,
+                                      stateUpdate: startNewSessionGameState,
                                   });
                               })}
                           ></${VirAssignControlsV1}>

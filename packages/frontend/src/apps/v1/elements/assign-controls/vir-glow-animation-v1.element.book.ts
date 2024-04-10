@@ -37,6 +37,7 @@ const VirAnimationBookWrapperV1 = defineElement<{milliseconds: number}>()({
                     inputHandler: undefined,
                     displayShortKey: false,
                     size: DeviceSizeEnum.Large,
+                    inputPlayerIndex: 0,
                 })}></${VirDeviceDisplayV1}>
             </${VirGlowAnimationV1}>
         `;

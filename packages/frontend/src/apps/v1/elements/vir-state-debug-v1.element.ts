@@ -4,7 +4,7 @@ import {WholeGameStateChangeEvent} from 'game-vir';
 import {
     ForwardGamePipeline,
     ForwardGameState,
-    resetToDefaultsGameState,
+    InitSettings,
 } from '../game-pipeline/forward-game-pipeline';
 
 export const VirStateDebugV1 = defineElement<{gamePipeline: ForwardGamePipeline}>()({
@@ -37,7 +37,7 @@ export const VirStateDebugV1 = defineElement<{gamePipeline: ForwardGamePipeline}
                 ${listen('click', () => {
                     inputs.gamePipeline.update({stateUpdate: {settings: undefined} as any});
                     inputs.gamePipeline.update({
-                        stateUpdate: mergeDeep<ForwardGameState>(resetToDefaultsGameState, {
+                        stateUpdate: mergeDeep<ForwardGameState>(InitSettings, {
                             runTime: {
                                 saveNextFrame: true,
                             },

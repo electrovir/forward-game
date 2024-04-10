@@ -1,7 +1,11 @@
 import {itCases} from '@augment-vir/browser-testing';
 import {mergeDeep} from '@augment-vir/common';
-import {BindingDirectionEnum} from './map-to-actions.module';
-import {GameAction, movementPerMillisecond, performActionsModule} from './perform-actions.module';
+import {BindingDirectionEnum} from './map-inputs-to-actions.module';
+import {
+    ForwardGameAction,
+    movementPerMillisecond,
+    performActionsModule,
+} from './perform-actions.module';
 
 const mockInput: Parameters<typeof performActionsModule.runModule>[0] = {
     executionContext: {},
@@ -33,7 +37,7 @@ describe(performActionsModule.moduleId.name, () => {
                     runTime: {
                         currentActions: [
                             {
-                                actionName: GameAction.Up,
+                                actionName: ForwardGameAction.Up,
                                 direction: BindingDirectionEnum.Positive,
                                 frameCount: 50,
                                 value: 1,
@@ -60,7 +64,7 @@ describe(performActionsModule.moduleId.name, () => {
                     runTime: {
                         currentActions: [
                             {
-                                actionName: GameAction.Pause,
+                                actionName: ForwardGameAction.Pause,
                                 direction: BindingDirectionEnum.Positive,
                                 frameCount: 1,
                                 value: 1,
@@ -84,7 +88,7 @@ describe(performActionsModule.moduleId.name, () => {
                     runTime: {
                         currentActions: [
                             {
-                                actionName: GameAction.Pause,
+                                actionName: ForwardGameAction.Pause,
                                 direction: BindingDirectionEnum.Positive,
                                 frameCount: 2,
                                 value: 1,
@@ -102,13 +106,13 @@ describe(performActionsModule.moduleId.name, () => {
                     runTime: {
                         currentActions: [
                             {
-                                actionName: GameAction.Up,
+                                actionName: ForwardGameAction.Up,
                                 direction: BindingDirectionEnum.Positive,
                                 frameCount: 50,
                                 value: 1,
                             },
                             {
-                                actionName: GameAction.Right,
+                                actionName: ForwardGameAction.Right,
                                 direction: BindingDirectionEnum.Positive,
                                 frameCount: 50,
                                 value: 1,
@@ -136,13 +140,13 @@ describe(performActionsModule.moduleId.name, () => {
                         isPaused: true,
                         currentActions: [
                             {
-                                actionName: GameAction.Up,
+                                actionName: ForwardGameAction.Up,
                                 direction: BindingDirectionEnum.Positive,
                                 frameCount: 50,
                                 value: 1,
                             },
                             {
-                                actionName: GameAction.Right,
+                                actionName: ForwardGameAction.Right,
                                 direction: BindingDirectionEnum.Positive,
                                 frameCount: 50,
                                 value: 1,

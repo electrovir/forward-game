@@ -6,7 +6,7 @@ import {
     InputDeviceTypeEnum,
     deviceKeyToDeviceType,
 } from 'input-device-handler';
-import {DeviceKey} from '../../game-pipeline/game-modules/map-to-actions.module';
+import {AnyPlayer, PlayerIndex} from '../../game-pipeline/game-modules/inputs/action-binding';
 import {Animation, VirGlowAnimationV1} from './vir-glow-animation-v1.element';
 
 export enum DeviceSizeEnum {
@@ -32,9 +32,20 @@ const shortKeys: Partial<Record<InputDeviceTypeEnum | string, string>> = {
 } satisfies Partial<Record<keyof typeof deviceEmojis, string>>;
 
 export const VirDeviceDisplayV1 = defineElement<{
-    deviceKey: DeviceKey | undefined;
+    /**
+     * `deviceKey` is `undefined` when we want to show the "add" (+) icon instead of an actual input
+     * device.
+     */
+    deviceKey: AnyInputDeviceKey | undefined;
     animated: boolean;
     size: DeviceSizeEnum;
+    /**
+     * `inputPlayerIndex` is the index of the player triggering the input.
+     *
+     * This is `undefined` when we want to show the "add" (+) icon instead of an actual input
+     * device.
+     */
+    inputPlayerIndex: PlayerIndex | undefined;
     displayShortKey: boolean;
     inputHandler: Pick<InputDeviceHandler, 'listen'> | undefined;
 }>()({
@@ -88,17 +99,17 @@ export const VirDeviceDisplayV1 = defineElement<{
     },
     renderCallback({inputs, state}) {
         const emojiKey: keyof typeof deviceEmojis =
-            inputs.deviceKey == undefined
-                ? 'Add Device'
-                : deviceKeyToDeviceType[inputs.deviceKey as AnyInputDeviceKey];
-        const displayKey: string | number =
-            (inputs.displayShortKey && shortKeys[emojiKey]) || (inputs.deviceKey ?? emojiKey);
+            inputs.deviceKey == undefined ? 'Add Device' : deviceKeyToDeviceType[inputs.deviceKey];
+        const displayPlayerIndex =
+            inputs.inputPlayerIndex === AnyPlayer ? '' : inputs.inputPlayerIndex;
+        const displayDeviceKey: string | number =
+            (inputs.displayShortKey && shortKeys[emojiKey]) || (displayPlayerIndex ?? emojiKey);
 
         return html`
             <${VirGlowAnimationV1.assign({animation: state.animation})}>
                 <span title=${emojiKey} class="device-icon">${deviceEmojis[emojiKey]}</span>
             </${VirGlowAnimationV1}>
-            <span>${displayKey}</span>
+            <span>${displayDeviceKey}</span>
         `;
     },
 });

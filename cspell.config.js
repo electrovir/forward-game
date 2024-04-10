@@ -11,5 +11,6 @@ module.exports = {
         ...baseConfig.words,
         'drawio',
         'skyblue',
+        'gamepad',
     ],
 };

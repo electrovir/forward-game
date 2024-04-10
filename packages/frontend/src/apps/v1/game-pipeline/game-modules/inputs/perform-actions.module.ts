@@ -1,9 +1,9 @@
 import {PickDeep, clamp, isEnumValue, isTruthy, mergeDeep, round} from '@augment-vir/common';
 import {GameModule} from 'game-vir';
 import {PartialDeep} from 'type-fest';
-import {GameStateForMappingInputs} from './map-to-actions.module';
+import {GameStateForMappingInputs} from './map-inputs-to-actions.module';
 
-export enum GameAction {
+export enum ForwardGameAction {
     Up = 'up',
     Down = 'down',
     Left = 'left',
@@ -60,30 +60,30 @@ function calculateNewState(
     let pauseChange: boolean | undefined = undefined;
 
     gameState.runTime.currentActions.forEach((currentAction) => {
-        if (!isEnumValue(currentAction.actionName, GameAction)) {
+        if (!isEnumValue(currentAction.actionName, ForwardGameAction)) {
             return;
-        } else if (currentAction.actionName === GameAction.Down) {
+        } else if (currentAction.actionName === ForwardGameAction.Down) {
             verticalMovement += round({
                 number: Math.min(currentAction.value, 1) * fullMovement,
                 digits: 1,
             });
-        } else if (currentAction.actionName === GameAction.Up) {
+        } else if (currentAction.actionName === ForwardGameAction.Up) {
             verticalMovement -= round({
                 number: Math.min(currentAction.value, 1) * fullMovement,
                 digits: 1,
             });
-        } else if (currentAction.actionName === GameAction.Right) {
+        } else if (currentAction.actionName === ForwardGameAction.Right) {
             horizontalMovement += round({
                 number: Math.min(currentAction.value, 1) * fullMovement,
                 digits: 1,
             });
-        } else if (currentAction.actionName === GameAction.Left) {
+        } else if (currentAction.actionName === ForwardGameAction.Left) {
             horizontalMovement -= round({
                 number: Math.min(currentAction.value, 1) * fullMovement,
                 digits: 1,
             });
         } else if (
-            currentAction.actionName === GameAction.Pause &&
+            currentAction.actionName === ForwardGameAction.Pause &&
             currentAction.frameCount === 1
         ) {
             pauseChange = !gameState.runTime.isPaused;
