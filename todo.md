@@ -1,0 +1,11 @@
+-   put all options inside an options object (include bindings options from game-vir, will need to modify game vir)
+-   if loading state fails, save existing state into a backup
+-   add state staving to game-vir
+-   implement pause
+-   allow using escape to pause
+-   allow using escape to exit options
+-   add binding options
+-   save binding profiles by device type
+-   allow remapping controllers to different slots
+-   figure out how this might support online play
+-   collision detection

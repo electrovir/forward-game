@@ -4,13 +4,8 @@ module.exports = {
     ...baseConfig,
     ignorePaths: [
         ...baseConfig.ignorePaths,
-        '*.drawio',
-        '**/configs/config-output-*',
     ],
     words: [
         ...baseConfig.words,
-        'drawio',
-        'skyblue',
-        'gamepad',
     ],
 };
